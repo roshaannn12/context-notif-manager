@@ -53,6 +53,8 @@ export default function Rules({
   deleteRule,
   rulesLoading,
   darkMode,
+  duplicateError,
+  setDuplicateError,
 }) {
   const actionColors = darkMode ? ACTION_COLORS_DARK : ACTION_COLORS;
 
@@ -236,6 +238,52 @@ export default function Rules({
             transition: "background 0.2s ease",
           }}
         >
+          {/* Duplicate Error Popup */}
+          {duplicateError && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              style={{
+                background: "#fef2f2",
+                border: "1px solid #fecaca",
+                borderRadius: "10px",
+                padding: "12px 16px",
+                marginBottom: "12px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "8px" }}
+              >
+                <span style={{ fontSize: "16px" }}>⚠️</span>
+                <p
+                  style={{
+                    fontSize: "13px",
+                    color: "#dc2626",
+                    margin: 0,
+                    fontWeight: "500",
+                  }}
+                >
+                  {duplicateError}
+                </p>
+              </div>
+              <button
+                onClick={() => setDuplicateError(null)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "#dc2626",
+                  fontSize: "16px",
+                  padding: "0 4px",
+                }}
+              >
+                ✕
+              </button>
+            </motion.div>
+          )}
           + Add Rule
         </motion.button>
       </div>

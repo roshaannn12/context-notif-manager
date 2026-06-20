@@ -46,7 +46,15 @@ const CONTEXTS = ["Work", "Leisure", "Sleep", "Focus", "Commute"];
 
 const MAX_NOTIFICATIONS = 12;
 
-export default function Dashboard({ user, rules, switchContext, darkMode }) {
+export default function Dashboard({
+  user,
+  rules,
+  switchContext,
+  darkMode,
+  customContexts,
+  onAddContext,
+  onDeleteContext,
+}) {
   const [notifications, setNotifications] = useState([]);
   const [connected, setConnected] = useState(false);
   const [stats, setStats] = useState({ muted: 0, snoozed: 0, allowed: 0 });
@@ -186,74 +194,124 @@ export default function Dashboard({ user, rules, switchContext, darkMode }) {
       `}</style>
 
       {/* Context Switcher */}
-      <div
-        style={{
-          background: "var(--bg-card)",
-          borderRadius: "14px",
-          padding: "20px",
-          marginBottom: "20px",
-          border: "1px solid var(--border)",
-          boxShadow: "var(--shadow)",
-        }}
-      >
-        <p
-          style={{
-            fontSize: "11px",
-            fontWeight: "600",
-            color: "var(--text-muted)",
-            marginBottom: "12px",
-            letterSpacing: "0.06em",
-          }}
-        >
-          SWITCH CONTEXT
-        </p>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(5, 1fr)",
-            gap: "8px",
-          }}
-        >
-          {CONTEXTS.map((context) => {
-            const isActive = user.currentContext === context;
-            return (
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+        {/* Default Contexts */}
+        {CONTEXTS.map((context) => {
+          const isActive = user.currentContext === context;
+          return (
+            <motion.button
+              key={context}
+              onClick={() => switchContext(context)}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              style={{
+                padding: "10px 16px",
+                borderRadius: "10px",
+                border: isActive
+                  ? `2px solid ${CONTEXT_COLORS[context]?.text}`
+                  : "1px solid var(--border)",
+                background: isActive
+                  ? darkMode
+                    ? "var(--accent-light)"
+                    : CONTEXT_COLORS[context]?.bg
+                  : "var(--bg-secondary)",
+                color: isActive
+                  ? CONTEXT_COLORS[context]?.text
+                  : "var(--text-secondary)",
+                fontSize: "12px",
+                fontWeight: isActive ? "600" : "400",
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <span>{CONTEXT_ICONS[context]}</span>
+              {context}
+            </motion.button>
+          );
+        })}
+
+        {/* Custom Contexts */}
+        {customContexts.map((context) => {
+          const isActive = user.currentContext === context.name;
+          return (
+            <div
+              key={context._id}
+              style={{ position: "relative", display: "inline-flex" }}
+            >
               <motion.button
-                key={context}
-                onClick={() => switchContext(context)}
+                onClick={() => switchContext(context.name)}
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 style={{
-                  padding: "10px 6px",
+                  padding: "10px 16px",
                   borderRadius: "10px",
                   border: isActive
-                    ? `2px solid ${CONTEXT_COLORS[context]?.text}`
+                    ? `2px solid ${context.color}`
                     : "1px solid var(--border)",
                   background: isActive
-                    ? darkMode
-                      ? "var(--accent-light)"
-                      : CONTEXT_COLORS[context]?.bg
+                    ? context.color + "20"
                     : "var(--bg-secondary)",
-                  color: isActive
-                    ? CONTEXT_COLORS[context]?.text
-                    : "var(--text-secondary)",
+                  color: isActive ? context.color : "var(--text-secondary)",
                   fontSize: "12px",
                   fontWeight: isActive ? "600" : "400",
                   cursor: "pointer",
                   transition: "all 0.2s ease",
                   display: "flex",
-                  flexDirection: "column",
                   alignItems: "center",
-                  gap: "4px",
+                  gap: "6px",
+                  paddingRight: "28px",
                 }}
               >
-                <span style={{ fontSize: "18px" }}>
-                  {CONTEXT_ICONS[context]}
-                </span>
-                {context}
+                <span>{context.icon}</span>
+                {context.name}
               </motion.button>
-            );
-          })}
-        </div>
+              {/* Delete button */}
+              <button
+                onClick={() => onDeleteContext(context._id)}
+                style={{
+                  position: "absolute",
+                  right: "6px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: "10px",
+                  color: "var(--text-muted)",
+                  padding: "2px",
+                }}
+              >
+                ✕
+              </button>
+            </div>
+          );
+        })}
+
+        {/* Add Context Button */}
+        <motion.button
+          onClick={onAddContext}
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+          style={{
+            padding: "10px 16px",
+            borderRadius: "10px",
+            border: "1px dashed var(--border)",
+            background: "transparent",
+            color: "var(--text-muted)",
+            fontSize: "12px",
+            fontWeight: "500",
+            cursor: "pointer",
+            transition: "all 0.2s ease",
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+          }}
+        >
+          + Add Context
+        </motion.button>
       </div>
 
       {/* Stats */}

@@ -8,12 +8,14 @@ import Dashboard from "@/components/Dashboard";
 import Rules from "@/components/Rules";
 import Analytics from "@/components/Analytics";
 import AuthGuard from "@/components/AuthGuard";
+import CustomContextModal from "@/components/CustomContextModal";
 
 export default function Home() {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [duplicateError, setDuplicateError] = useState(null);
   const [rules, setRules] = useState([]);
   const [newRule, setNewRule] = useState({
     appName: "Instagram",
@@ -23,6 +25,8 @@ export default function Home() {
   const [rulesLoading, setRulesLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [darkMode, setDarkMode] = useState(false);
+  const [customContexts, setCustomContexts] = useState([]);
+  const [showContextModal, setShowContextModal] = useState(false);
 
   useEffect(() => {
     if (darkMode) {
@@ -81,14 +85,32 @@ export default function Home() {
   };
 
   const addRule = async () => {
+    setError(null);
+    setDuplicateError(null);
     try {
       const res = await axios.post("http://localhost:5000/api/rules", {
         userId: user._id,
         ...newRule,
       });
-      setRules([...rules, res.data]);
-    } catch {
-      setError("Failed to add rule!");
+      if (res.data.updated) {
+        // Rule was updated — replace old one in list
+        setRules(
+          rules.map((r) =>
+            r.appName === res.data.appName && r.context === res.data.context
+              ? res.data
+              : r,
+          ),
+        );
+      } else {
+        // New rule added
+        setRules([...rules, res.data]);
+      }
+    } catch (err) {
+      if (err.response?.status === 400) {
+        setDuplicateError(err.response.data.message);
+      } else {
+        setError("Failed to add rule!");
+      }
     }
   };
 
@@ -101,6 +123,43 @@ export default function Home() {
     }
   };
 
+  const fetchCustomContexts = async (userId) => {
+    try {
+      const res = await axios.get(
+        `http://localhost:5000/api/contexts/${userId}`,
+      );
+      setCustomContexts(res.data);
+    } catch {
+      console.error("Failed to fetch custom contexts");
+    }
+  };
+
+  const addCustomContext = async (contextData) => {
+    try {
+      const res = await axios.post(
+        "http://localhost:5000/api/contexts",
+        contextData,
+      );
+      setCustomContexts([...customContexts, res.data]);
+      setShowContextModal(false);
+    } catch (err) {
+      if (err.response?.status === 400) {
+        setError(err.response.data.message);
+      } else {
+        setError("Failed to create context!");
+      }
+    }
+  };
+
+  const deleteCustomContext = async (contextId) => {
+    try {
+      await axios.delete(`http://localhost:5000/api/contexts/${contextId}`);
+      setCustomContexts(customContexts.filter((c) => c._id !== contextId));
+    } catch {
+      setError("Failed to delete context!");
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -108,7 +167,10 @@ export default function Home() {
   };
 
   useEffect(() => {
-    if (user) fetchRules(user._id);
+    if (user) {
+      fetchRules(user._id);
+      fetchCustomContexts(user._id);
+    }
   }, [user]);
 
   if (loading) {
@@ -184,6 +246,9 @@ export default function Home() {
                   rules={rules}
                   switchContext={switchContext}
                   darkMode={darkMode}
+                  customContexts={customContexts}
+                  onAddContext={() => setShowContextModal(true)}
+                  onDeleteContext={deleteCustomContext}
                 />
               </motion.div>
             )}
@@ -204,6 +269,8 @@ export default function Home() {
                   deleteRule={deleteRule}
                   rulesLoading={rulesLoading}
                   darkMode={darkMode}
+                  duplicateError={duplicateError}
+                  setDuplicateError={setDuplicateError}
                 />
               </motion.div>
             )}
@@ -222,6 +289,15 @@ export default function Home() {
           </AnimatePresence>
         </div>
       </div>
+
+      {showContextModal && (
+        <CustomContextModal
+          userId={user?._id}
+          onClose={() => setShowContextModal(false)}
+          onAdd={addCustomContext}
+          darkMode={darkMode}
+        />
+      )}
     </AuthGuard>
   );
 }

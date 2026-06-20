@@ -7,6 +7,7 @@ import connectDB from "./db.js";
 import userRoutes from "./routes/userRoutes.js";
 import ruleRoutes from "./routes/ruleRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
+import contextRoutes from "./routes/contextRoutes.js";
 
 dotenv.config();
 
@@ -32,6 +33,7 @@ connectDB();
 app.use("/api/users", userRoutes);
 app.use("/api/rules", ruleRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/contexts", contextRoutes);
 
 // Test route
 app.get("/", (req, res) => {

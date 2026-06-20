@@ -78,7 +78,7 @@ export default function Dashboard({
 
   // WebSocket connection
   useEffect(() => {
-    const socket = io("http://localhost:5000");
+    const socket = io("https://context-notif-manager-backend.onrender.com");
 
     socket.on("connect", () => {
       setConnected(true);

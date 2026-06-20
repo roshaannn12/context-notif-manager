@@ -111,7 +111,7 @@ pnpm install
 pnpm dev
 ```
 
-Backend runs on `http://localhost:5000`
+Backend runs on `https://context-notif-manager-backend.onrender.com`
 
 ### 3. Run the Frontend
 

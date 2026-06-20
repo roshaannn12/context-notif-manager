@@ -47,9 +47,12 @@ export default function Home() {
         return;
       }
       try {
-        const res = await axios.get("http://localhost:5000/api/auth/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await axios.get(
+          "https://context-notif-manager-backend.onrender.com/api/auth/me",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
         setUser(res.data);
       } catch {
         localStorage.removeItem("token");
@@ -65,7 +68,7 @@ export default function Home() {
     const token = localStorage.getItem("token");
     try {
       const res = await axios.put(
-        "http://localhost:5000/api/auth/context",
+        "https://context-notif-manager-backend.onrender.com/api/auth/context",
         { context },
         { headers: { Authorization: `Bearer ${token}` } },
       );
@@ -78,7 +81,9 @@ export default function Home() {
   const fetchRules = async (userId) => {
     setRulesLoading(true);
     try {
-      const res = await axios.get(`http://localhost:5000/api/rules/${userId}`);
+      const res = await axios.get(
+        `https://context-notif-manager-backend.onrender.com/api/rules/${userId}`,
+      );
       setRules(res.data);
     } catch {
       setError("Failed to fetch rules!");
@@ -90,10 +95,13 @@ export default function Home() {
     setError(null);
     setDuplicateError(null);
     try {
-      const res = await axios.post("http://localhost:5000/api/rules", {
-        userId: user._id,
-        ...newRule,
-      });
+      const res = await axios.post(
+        "https://context-notif-manager-backend.onrender.com/api/rules",
+        {
+          userId: user._id,
+          ...newRule,
+        },
+      );
       if (res.data.updated) {
         // Rule was updated — replace old one in list
         setRules(
@@ -118,7 +126,9 @@ export default function Home() {
 
   const deleteRule = async (ruleId) => {
     try {
-      await axios.delete(`http://localhost:5000/api/rules/${ruleId}`);
+      await axios.delete(
+        `https://context-notif-manager-backend.onrender.com/api/rules/${ruleId}`,
+      );
       setRules(rules.filter((r) => r._id !== ruleId));
     } catch {
       setError("Failed to delete rule!");
@@ -128,7 +138,7 @@ export default function Home() {
   const fetchCustomContexts = async (userId) => {
     try {
       const res = await axios.get(
-        `http://localhost:5000/api/contexts/${userId}`,
+        `https://context-notif-manager-backend.onrender.com/api/contexts/${userId}`,
       );
       setCustomContexts(res.data);
     } catch {
@@ -139,7 +149,7 @@ export default function Home() {
   const addCustomContext = async (contextData) => {
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/contexts",
+        "https://context-notif-manager-backend.onrender.com/api/contexts",
         contextData,
       );
       setCustomContexts([...customContexts, res.data]);
@@ -155,7 +165,9 @@ export default function Home() {
 
   const deleteCustomContext = async (contextId) => {
     try {
-      await axios.delete(`http://localhost:5000/api/contexts/${contextId}`);
+      await axios.delete(
+        `https://context-notif-manager-backend.onrender.com/api/contexts/${contextId}`,
+      );
       setCustomContexts(customContexts.filter((c) => c._id !== contextId));
     } catch {
       setError("Failed to delete context!");
@@ -164,7 +176,9 @@ export default function Home() {
 
   const fetchVipContacts = async (userId) => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/vip/${userId}`);
+      const res = await axios.get(
+        `https://context-notif-manager-backend.onrender.com/api/vip/${userId}`,
+      );
       setVipContacts(res.data);
     } catch {
       console.error("Failed to fetch VIP contacts");
@@ -173,10 +187,13 @@ export default function Home() {
 
   const addVipContact = async (contactData) => {
     try {
-      const res = await axios.post("http://localhost:5000/api/vip", {
-        userId: user._id,
-        ...contactData,
-      });
+      const res = await axios.post(
+        "https://context-notif-manager-backend.onrender.com/api/vip",
+        {
+          userId: user._id,
+          ...contactData,
+        },
+      );
       setVipContacts([...vipContacts, res.data]);
     } catch (err) {
       if (err.response?.status === 400) {
@@ -188,7 +205,9 @@ export default function Home() {
 
   const deleteVipContact = async (contactId) => {
     try {
-      await axios.delete(`http://localhost:5000/api/vip/${contactId}`);
+      await axios.delete(
+        `https://context-notif-manager-backend.onrender.com/api/vip/${contactId}`,
+      );
       setVipContacts(vipContacts.filter((c) => c._id !== contactId));
     } catch {
       setError("Failed to delete VIP contact!");

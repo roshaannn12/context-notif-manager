@@ -54,7 +54,7 @@ export default function Register() {
         phone: loginMethod === "phone" ? form.phone : undefined,
       };
       const res = await axios.post(
-        "http://localhost:5000/api/auth/register",
+        "https://context-notif-manager-backend.onrender.com/api/auth/register",
         payload,
       );
       localStorage.setItem("token", res.data.token);

@@ -9,11 +9,27 @@ const generateToken = (id) => {
 // Register
 export const register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, phone, password } = req.body;
 
-    const userExists = await Auth.findOne({ email });
-    if (userExists) {
-      return res.status(400).json({ message: "User already exists" });
+    if (!email && !phone) {
+      return res.status(400).json({ message: "Email or phone is required!" });
+    }
+
+    // Check if user exists
+    if (email) {
+      const emailExists = await Auth.findOne({ email });
+      if (emailExists) {
+        return res.status(400).json({ message: "Email already registered!" });
+      }
+    }
+
+    if (phone) {
+      const phoneExists = await Auth.findOne({ phone });
+      if (phoneExists) {
+        return res
+          .status(400)
+          .json({ message: "Phone number already registered!" });
+      }
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -21,7 +37,8 @@ export const register = async (req, res) => {
 
     const user = await Auth.create({
       name,
-      email,
+      email: email || undefined,
+      phone: phone || undefined,
       password: hashedPassword,
     });
 
@@ -29,6 +46,7 @@ export const register = async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
+      phone: user.phone,
       currentContext: user.currentContext,
       token: generateToken(user._id),
     });
@@ -40,22 +58,32 @@ export const register = async (req, res) => {
 // Login
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { identifier, password } = req.body;
 
-    const user = await Auth.findOne({ email });
+    if (!identifier) {
+      return res.status(400).json({ message: "Email or phone is required!" });
+    }
+
+    // Check if identifier is email or phone
+    const isEmail = identifier.includes("@");
+    const user = isEmail
+      ? await Auth.findOne({ email: identifier })
+      : await Auth.findOne({ phone: identifier });
+
     if (!user) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(400).json({ message: "Invalid credentials!" });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(400).json({ message: "Invalid credentials!" });
     }
 
     res.json({
       _id: user._id,
       name: user.name,
       email: user.email,
+      phone: user.phone,
       currentContext: user.currentContext,
       token: generateToken(user._id),
     });
@@ -84,7 +112,7 @@ export const updateContext = async (req, res) => {
     const user = await Auth.findByIdAndUpdate(
       req.user.id,
       { currentContext: context },
-      { new: true },
+      { returnDocument: "after" },
     ).select("-password");
     res.json(user);
   } catch (error) {

@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: "📊" },
   { id: "rules", label: "Rules", icon: "⚙️" },
+  { id: "vip", label: "VIP Contacts", icon: "⭐" },
   { id: "analytics", label: "Analytics", icon: "📈" },
 ];
 

@@ -7,7 +7,13 @@ import { motion } from "framer-motion";
 
 export default function Register() {
   const router = useRouter();
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    password: "",
+  });
+  const [loginMethod, setLoginMethod] = useState("email");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
@@ -15,10 +21,41 @@ export default function Register() {
   const handleSubmit = async () => {
     setLoading(true);
     setError(null);
+
+    if (!form.name.trim()) {
+      setError("Please enter your name!");
+      setLoading(false);
+      return;
+    }
+
+    if (loginMethod === "email" && !form.email.trim()) {
+      setError("Please enter your email!");
+      setLoading(false);
+      return;
+    }
+
+    if (loginMethod === "phone" && !form.phone.trim()) {
+      setError("Please enter your phone number!");
+      setLoading(false);
+      return;
+    }
+
+    if (!form.password.trim()) {
+      setError("Please enter a password!");
+      setLoading(false);
+      return;
+    }
+
     try {
+      const payload = {
+        name: form.name,
+        password: form.password,
+        email: loginMethod === "email" ? form.email : undefined,
+        phone: loginMethod === "phone" ? form.phone : undefined,
+      };
       const res = await axios.post(
         "http://localhost:5000/api/auth/register",
-        form,
+        payload,
       );
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data));
@@ -132,6 +169,53 @@ export default function Register() {
           </div>
         )}
 
+        {/* Login Method Toggle */}
+        <div
+          style={{
+            display: "flex",
+            gap: "8px",
+            marginBottom: "20px",
+            background: darkMode ? "#0f172a" : "#f8fafc",
+            padding: "4px",
+            borderRadius: "10px",
+            border: `1px solid ${darkMode ? "#334155" : "#e2e8f0"}`,
+          }}
+        >
+          {["email", "phone"].map((method) => (
+            <button
+              key={method}
+              onClick={() => setLoginMethod(method)}
+              style={{
+                flex: 1,
+                padding: "8px",
+                borderRadius: "8px",
+                border: "none",
+                background:
+                  loginMethod === method
+                    ? darkMode
+                      ? "#1e293b"
+                      : "#ffffff"
+                    : "transparent",
+                color:
+                  loginMethod === method
+                    ? darkMode
+                      ? "#f1f5f9"
+                      : "#0f172a"
+                    : darkMode
+                      ? "#64748b"
+                      : "#94a3b8",
+                fontSize: "13px",
+                fontWeight: loginMethod === method ? "600" : "400",
+                cursor: "pointer",
+                boxShadow:
+                  loginMethod === method ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+              }}
+            >
+              {method === "email" ? "📧 Email" : "📱 Phone"}
+            </button>
+          ))}
+        </div>
+
         {/* Form */}
         <div
           style={{
@@ -172,37 +256,73 @@ export default function Register() {
               }}
             />
           </div>
-          <div>
-            <label
-              style={{
-                fontSize: "12px",
-                fontWeight: "600",
-                color: darkMode ? "#94a3b8" : "#475569",
-                display: "block",
-                marginBottom: "6px",
-                letterSpacing: "0.04em",
-              }}
-            >
-              EMAIL
-            </label>
-            <input
-              type="email"
-              placeholder="you@example.com"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              style={{
-                width: "100%",
-                padding: "10px 14px",
-                borderRadius: "10px",
-                fontSize: "13px",
-                border: `1px solid ${darkMode ? "#334155" : "#e2e8f0"}`,
-                background: darkMode ? "#0f172a" : "#f8fafc",
-                color: darkMode ? "#f1f5f9" : "#0f172a",
-                outline: "none",
-                boxSizing: "border-box",
-              }}
-            />
-          </div>
+
+          {loginMethod === "email" ? (
+            <div>
+              <label
+                style={{
+                  fontSize: "12px",
+                  fontWeight: "600",
+                  color: darkMode ? "#94a3b8" : "#475569",
+                  display: "block",
+                  marginBottom: "6px",
+                  letterSpacing: "0.04em",
+                }}
+              >
+                EMAIL
+              </label>
+              <input
+                type="email"
+                placeholder="you@example.com"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                style={{
+                  width: "100%",
+                  padding: "10px 14px",
+                  borderRadius: "10px",
+                  fontSize: "13px",
+                  border: `1px solid ${darkMode ? "#334155" : "#e2e8f0"}`,
+                  background: darkMode ? "#0f172a" : "#f8fafc",
+                  color: darkMode ? "#f1f5f9" : "#0f172a",
+                  outline: "none",
+                  boxSizing: "border-box",
+                }}
+              />
+            </div>
+          ) : (
+            <div>
+              <label
+                style={{
+                  fontSize: "12px",
+                  fontWeight: "600",
+                  color: darkMode ? "#94a3b8" : "#475569",
+                  display: "block",
+                  marginBottom: "6px",
+                  letterSpacing: "0.04em",
+                }}
+              >
+                PHONE NUMBER
+              </label>
+              <input
+                type="tel"
+                placeholder="9876543210"
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                style={{
+                  width: "100%",
+                  padding: "10px 14px",
+                  borderRadius: "10px",
+                  fontSize: "13px",
+                  border: `1px solid ${darkMode ? "#334155" : "#e2e8f0"}`,
+                  background: darkMode ? "#0f172a" : "#f8fafc",
+                  color: darkMode ? "#f1f5f9" : "#0f172a",
+                  outline: "none",
+                  boxSizing: "border-box",
+                }}
+              />
+            </div>
+          )}
+
           <div>
             <label
               style={{

@@ -7,7 +7,8 @@ import { motion } from "framer-motion";
 
 export default function Login() {
   const router = useRouter();
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
@@ -16,10 +17,10 @@ export default function Login() {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.post(
-        "http://localhost:5000/api/auth/login",
-        form,
-      );
+      const res = await axios.post("http://localhost:5000/api/auth/login", {
+        identifier,
+        password,
+      });
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data));
       router.push("/");
@@ -152,13 +153,13 @@ export default function Login() {
                 letterSpacing: "0.04em",
               }}
             >
-              EMAIL
+              EMAIL OR PHONE
             </label>
             <input
-              type="email"
-              placeholder="you@example.com"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              type="text"
+              placeholder="you@example.com or 9876543210"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
               style={{
                 width: "100%",
                 padding: "10px 14px",
@@ -188,8 +189,8 @@ export default function Login() {
             <input
               type="password"
               placeholder="••••••••"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
               style={{
                 width: "100%",

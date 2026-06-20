@@ -9,6 +9,7 @@ import Rules from "@/components/Rules";
 import Analytics from "@/components/Analytics";
 import AuthGuard from "@/components/AuthGuard";
 import CustomContextModal from "@/components/CustomContextModal";
+import VipContacts from "@/components/VipContacts";
 
 export default function Home() {
   const router = useRouter();
@@ -27,6 +28,7 @@ export default function Home() {
   const [darkMode, setDarkMode] = useState(false);
   const [customContexts, setCustomContexts] = useState([]);
   const [showContextModal, setShowContextModal] = useState(false);
+  const [vipContacts, setVipContacts] = useState([]);
 
   useEffect(() => {
     if (darkMode) {
@@ -160,6 +162,39 @@ export default function Home() {
     }
   };
 
+  const fetchVipContacts = async (userId) => {
+    try {
+      const res = await axios.get(`http://localhost:5000/api/vip/${userId}`);
+      setVipContacts(res.data);
+    } catch {
+      console.error("Failed to fetch VIP contacts");
+    }
+  };
+
+  const addVipContact = async (contactData) => {
+    try {
+      const res = await axios.post("http://localhost:5000/api/vip", {
+        userId: user._id,
+        ...contactData,
+      });
+      setVipContacts([...vipContacts, res.data]);
+    } catch (err) {
+      if (err.response?.status === 400) {
+        return { error: err.response.data.message };
+      }
+      return { error: "Failed to add VIP contact!" };
+    }
+  };
+
+  const deleteVipContact = async (contactId) => {
+    try {
+      await axios.delete(`http://localhost:5000/api/vip/${contactId}`);
+      setVipContacts(vipContacts.filter((c) => c._id !== contactId));
+    } catch {
+      setError("Failed to delete VIP contact!");
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -170,6 +205,7 @@ export default function Home() {
     if (user) {
       fetchRules(user._id);
       fetchCustomContexts(user._id);
+      fetchVipContacts(user._id);
     }
   }, [user]);
 
@@ -274,6 +310,25 @@ export default function Home() {
                 />
               </motion.div>
             )}
+
+            {activeTab === "vip" && (
+              <motion.div
+                key="vip"
+                initial={{ opacity: 0, x: 16 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -16 }}
+                transition={{ duration: 0.18 }}
+                style={{ height: "100%" }}
+              >
+                <VipContacts
+                  vipContacts={vipContacts}
+                  onAdd={addVipContact}
+                  onDelete={deleteVipContact}
+                  darkMode={darkMode}
+                />
+              </motion.div>
+            )}
+
             {activeTab === "analytics" && (
               <motion.div
                 key="analytics"

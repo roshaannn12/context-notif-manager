@@ -8,6 +8,7 @@ import userRoutes from "./routes/userRoutes.js";
 import ruleRoutes from "./routes/ruleRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import contextRoutes from "./routes/contextRoutes.js";
+import vipRoutes from "./routes/vipRoutes.js";
 
 dotenv.config();
 
@@ -34,6 +35,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/rules", ruleRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/contexts", contextRoutes);
+app.use("/api/vip", vipRoutes);
 
 // Test route
 app.get("/", (req, res) => {

@@ -1,5 +1,7 @@
 "use client";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect } from "react";
+import { io } from "socket.io-client";
 
 const CONTEXT_COLORS = {
   Work: { bg: "#eff6ff", text: "#3b82f6", dark: "#1e3a5f" },
@@ -40,50 +42,15 @@ const APP_ICONS = {
   Telegram: "✈️",
 };
 
-const FAKE_NOTIFICATIONS = [
-  {
-    id: 1,
-    app: "Instagram",
-    message: "John liked your photo",
-    time: "just now",
-  },
-  {
-    id: 2,
-    app: "Gmail",
-    message: "New email from your manager",
-    time: "1m ago",
-  },
-  { id: 3, app: "Slack", message: "Team standup in 5 minutes", time: "2m ago" },
-  {
-    id: 4,
-    app: "WhatsApp",
-    message: "Mom: Are you coming home?",
-    time: "3m ago",
-  },
-  {
-    id: 5,
-    app: "YouTube",
-    message: "Your favorite creator posted",
-    time: "5m ago",
-  },
-  {
-    id: 6,
-    app: "Twitter",
-    message: "You have 10 new mentions",
-    time: "7m ago",
-  },
-  {
-    id: 7,
-    app: "Discord",
-    message: "New message in #general",
-    time: "10m ago",
-  },
-  { id: 8, app: "Telegram", message: "New message from Alex", time: "12m ago" },
-];
-
 const CONTEXTS = ["Work", "Leisure", "Sleep", "Focus", "Commute"];
 
+const MAX_NOTIFICATIONS = 12;
+
 export default function Dashboard({ user, rules, switchContext, darkMode }) {
+  const [notifications, setNotifications] = useState([]);
+  const [connected, setConnected] = useState(false);
+  const [stats, setStats] = useState({ muted: 0, snoozed: 0, allowed: 0 });
+
   const getStatus = (appName) => {
     const rule = rules.find(
       (r) => r.appName === appName && r.context === user.currentContext,
@@ -91,60 +58,132 @@ export default function Dashboard({ user, rules, switchContext, darkMode }) {
     return rule ? rule.action : "allow";
   };
 
-  const getStats = () => {
+  // Update stats when rules or context changes
+  useEffect(() => {
     const current = rules.filter((r) => r.context === user.currentContext);
-    return {
+    setStats({
       muted: current.filter((r) => r.action === "mute").length,
       snoozed: current.filter((r) => r.action === "snooze").length,
       allowed: current.filter((r) => r.action === "allow").length,
-    };
-  };
+    });
+  }, [rules, user.currentContext]);
 
-  const stats = getStats();
+  // WebSocket connection
+  useEffect(() => {
+    const socket = io("http://localhost:5000");
+
+    socket.on("connect", () => {
+      setConnected(true);
+      console.log("Connected to WebSocket");
+    });
+
+    socket.on("disconnect", () => {
+      setConnected(false);
+    });
+
+    socket.on("new-notification", (notif) => {
+      setNotifications((prev) => {
+        const updated = [notif, ...prev];
+        return updated.slice(0, MAX_NOTIFICATIONS);
+      });
+    });
+
+    return () => socket.disconnect();
+  }, []);
+
   const actionColors = darkMode ? ACTION_COLORS_DARK : ACTION_COLORS;
 
   return (
     <div style={{ padding: "32px", flex: 1, overflowY: "auto" }}>
       {/* Header */}
-      <div style={{ marginBottom: "28px" }}>
-        <h2
-          style={{
-            fontSize: "22px",
-            fontWeight: "600",
-            color: "var(--text-primary)",
-            margin: "0 0 4px",
-          }}
-        >
-          Dashboard
-        </h2>
-        <p
-          style={{
-            fontSize: "13px",
-            color: "var(--text-secondary)",
-            margin: 0,
-          }}
-        >
-          You're in{" "}
-          <span
+      <div
+        style={{
+          marginBottom: "28px",
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+        }}
+      >
+        <div>
+          <h2
             style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "4px",
-              padding: "2px 10px",
-              borderRadius: "20px",
-              fontSize: "12px",
+              fontSize: "22px",
               fontWeight: "600",
-              background: darkMode
-                ? "var(--accent-light)"
-                : CONTEXT_COLORS[user.currentContext]?.bg,
-              color: CONTEXT_COLORS[user.currentContext]?.text,
+              color: "var(--text-primary)",
+              margin: "0 0 4px",
             }}
           >
-            {CONTEXT_ICONS[user.currentContext]} {user.currentContext}
-          </span>{" "}
-          mode
-        </p>
+            Dashboard
+          </h2>
+          <p
+            style={{
+              fontSize: "13px",
+              color: "var(--text-secondary)",
+              margin: 0,
+            }}
+          >
+            You're in{" "}
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+                padding: "2px 10px",
+                borderRadius: "20px",
+                fontSize: "12px",
+                fontWeight: "600",
+                background: darkMode
+                  ? "var(--accent-light)"
+                  : CONTEXT_COLORS[user.currentContext]?.bg,
+                color: CONTEXT_COLORS[user.currentContext]?.text,
+              }}
+            >
+              {CONTEXT_ICONS[user.currentContext]} {user.currentContext}
+            </span>{" "}
+            mode
+          </p>
+        </div>
+
+        {/* Live indicator */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            padding: "6px 12px",
+            borderRadius: "20px",
+            background: connected ? "#f0fdf4" : "#fef2f2",
+            border: `1px solid ${connected ? "#bbf7d0" : "#fecaca"}`,
+          }}
+        >
+          <div
+            style={{
+              width: "7px",
+              height: "7px",
+              borderRadius: "50%",
+              background: connected ? "#22c55e" : "#ef4444",
+              animation: connected ? "pulse 1.5s infinite" : "none",
+            }}
+          />
+          <span
+            style={{
+              fontSize: "11px",
+              fontWeight: "600",
+              color: connected ? "#16a34a" : "#dc2626",
+            }}
+          >
+            {connected ? "Live" : "Offline"}
+          </span>
+        </div>
       </div>
+
+      {/* Pulse animation */}
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.5; transform: scale(1.3); }
+        }
+      `}</style>
 
       {/* Context Switcher */}
       <div
@@ -291,7 +330,7 @@ export default function Dashboard({ user, rules, switchContext, darkMode }) {
         ))}
       </div>
 
-      {/* Notification Feed */}
+      {/* Live Notification Feed */}
       <div
         style={{
           background: "var(--bg-card)",
@@ -301,95 +340,131 @@ export default function Dashboard({ user, rules, switchContext, darkMode }) {
           boxShadow: "var(--shadow)",
         }}
       >
-        <p
+        <div
           style={{
-            fontSize: "11px",
-            fontWeight: "600",
-            color: "var(--text-muted)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
             marginBottom: "14px",
-            letterSpacing: "0.06em",
           }}
         >
-          INCOMING NOTIFICATIONS
-        </p>
-        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-          {FAKE_NOTIFICATIONS.map((notif, i) => {
-            const status = getStatus(notif.app);
-            const colors = actionColors[status];
-            return (
-              <motion.div
-                key={notif.id}
-                initial={{ opacity: 0, x: -16 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.04 }}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "10px 14px",
-                  borderRadius: "10px",
-                  border: `1px solid ${colors.border}`,
-                  background: colors.bg,
-                  opacity: status === "mute" ? 0.5 : 1,
-                  transition: "all 0.2s ease",
-                }}
-              >
-                <div
-                  style={{ display: "flex", alignItems: "center", gap: "10px" }}
-                >
-                  <span style={{ fontSize: "18px" }}>
-                    {APP_ICONS[notif.app]}
-                  </span>
-                  <div>
-                    <p
-                      style={{
-                        fontSize: "13px",
-                        fontWeight: "600",
-                        color: "var(--text-primary)",
-                        margin: 0,
-                      }}
-                    >
-                      {notif.app}
-                    </p>
-                    <p
-                      style={{
-                        fontSize: "11px",
-                        color: "var(--text-secondary)",
-                        margin: 0,
-                      }}
-                    >
-                      {status === "mute"
-                        ? "🔇 Notification muted"
-                        : notif.message}
-                    </p>
-                  </div>
-                </div>
-                <div
-                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
-                >
-                  <span
-                    style={{ fontSize: "11px", color: "var(--text-muted)" }}
-                  >
-                    {notif.time}
-                  </span>
-                  <span
+          <p
+            style={{
+              fontSize: "11px",
+              fontWeight: "600",
+              color: "var(--text-muted)",
+              letterSpacing: "0.06em",
+              margin: 0,
+            }}
+          >
+            LIVE NOTIFICATION FEED
+          </p>
+          <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+            {notifications.length} notifications
+          </span>
+        </div>
+
+        {notifications.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "32px 0" }}>
+            <p style={{ fontSize: "28px", marginBottom: "8px" }}>📭</p>
+            <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>
+              Waiting for notifications...
+            </p>
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <AnimatePresence initial={false}>
+              {notifications.map((notif) => {
+                const status = getStatus(notif.app);
+                const colors = actionColors[status];
+                return (
+                  <motion.div
+                    key={notif.id}
+                    initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                    animate={{
+                      opacity: status === "mute" ? 0.4 : 1,
+                      y: 0,
+                      scale: 1,
+                    }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.25 }}
                     style={{
-                      fontSize: "11px",
-                      fontWeight: "600",
-                      padding: "2px 8px",
-                      borderRadius: "20px",
-                      background: colors.bg,
-                      color: colors.text,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "10px 14px",
+                      borderRadius: "10px",
                       border: `1px solid ${colors.border}`,
+                      background: colors.bg,
+                      transition: "all 0.2s ease",
                     }}
                   >
-                    {status}
-                  </span>
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "10px",
+                      }}
+                    >
+                      <span style={{ fontSize: "18px" }}>
+                        {APP_ICONS[notif.app]}
+                      </span>
+                      <div>
+                        <p
+                          style={{
+                            fontSize: "13px",
+                            fontWeight: "600",
+                            color: "var(--text-primary)",
+                            margin: 0,
+                          }}
+                        >
+                          {notif.app}
+                        </p>
+                        <p
+                          style={{
+                            fontSize: "11px",
+                            color: "var(--text-secondary)",
+                            margin: 0,
+                          }}
+                        >
+                          {status === "mute"
+                            ? "🔇 Notification muted"
+                            : notif.message}
+                        </p>
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                      }}
+                    >
+                      <span
+                        style={{ fontSize: "11px", color: "var(--text-muted)" }}
+                      >
+                        {notif.time}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: "11px",
+                          fontWeight: "600",
+                          padding: "2px 8px",
+                          borderRadius: "20px",
+                          background: colors.bg,
+                          color: colors.text,
+                          border: `1px solid ${colors.border}`,
+                        }}
+                      >
+                        {status}
+                      </span>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </div>
+        )}
       </div>
     </div>
   );

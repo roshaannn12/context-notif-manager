@@ -29,6 +29,7 @@ export default function Sidebar({
   setActiveTab,
   darkMode,
   setDarkMode,
+  onLogout,
 }) {
   return (
     <div
@@ -216,8 +217,39 @@ export default function Sidebar({
         ))}
       </nav>
 
-      {/* Bottom Badge */}
-      <div style={{ marginTop: "auto" }}>
+      {/* Bottom */}
+      <div
+        style={{
+          marginTop: "auto",
+          display: "flex",
+          flexDirection: "column",
+          gap: "8px",
+        }}
+      >
+        {/* Logout */}
+        {onLogout && (
+          <button
+            onClick={onLogout}
+            style={{
+              width: "100%",
+              padding: "9px 12px",
+              borderRadius: "9px",
+              border: "1px solid var(--border)",
+              background: "transparent",
+              cursor: "pointer",
+              fontSize: "13px",
+              fontWeight: "500",
+              color: "#dc2626",
+              textAlign: "left",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              transition: "all 0.2s ease",
+            }}
+          >
+            🚪 Logout
+          </button>
+        )}
         <div
           style={{
             background: "var(--accent-light)",

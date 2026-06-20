@@ -1,15 +1,18 @@
 "use client";
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Sidebar from "@/components/Sidebar";
 import Dashboard from "@/components/Dashboard";
 import Rules from "@/components/Rules";
 import Analytics from "@/components/Analytics";
+import AuthGuard from "@/components/AuthGuard";
 
 export default function Home() {
+  const router = useRouter();
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [rules, setRules] = useState([]);
   const [newRule, setNewRule] = useState({
@@ -21,7 +24,6 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [darkMode, setDarkMode] = useState(false);
 
-  // Apply dark mode to html element
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add("dark");
@@ -30,37 +32,36 @@ export default function Home() {
     }
   }, [darkMode]);
 
-  const createUser = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await axios.post("http://localhost:5000/api/users", {
-        name: "Roshan",
-        email: "roshan@test.com",
-      });
-      setUser(res.data);
-    } catch (err) {
-      if (err.response?.status === 400) {
-        try {
-          const res = await axios.get(
-            "http://localhost:5000/api/users/by-email/roshan@test.com",
-          );
-          setUser(res.data);
-        } catch {
-          setError("Could not load profile!");
-        }
-      } else {
-        setError("Something went wrong!");
+  // Load user from token on mount
+  useEffect(() => {
+    const loadUser = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        router.push("/login");
+        return;
       }
-    }
-    setLoading(false);
-  };
+      try {
+        const res = await axios.get("http://localhost:5000/api/auth/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setUser(res.data);
+      } catch {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        router.push("/login");
+      }
+      setLoading(false);
+    };
+    loadUser();
+  }, []);
 
   const switchContext = async (context) => {
+    const token = localStorage.getItem("token");
     try {
       const res = await axios.put(
-        `http://localhost:5000/api/users/${user._id}/context`,
+        "http://localhost:5000/api/auth/context",
         { context },
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       setUser(res.data);
     } catch {
@@ -100,147 +101,74 @@ export default function Home() {
     }
   };
 
+  const logout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    router.push("/login");
+  };
+
   useEffect(() => {
     if (user) fetchRules(user._id);
   }, [user]);
 
-  return (
-    <div
-      style={{
-        display: "flex",
-        minHeight: "100vh",
-        background: "var(--bg-tertiary)",
-        color: "var(--text-primary)",
-        transition: "all 0.3s ease",
-      }}
-    >
-      {/* Sidebar */}
-      <Sidebar
-        user={user}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        darkMode={darkMode}
-        setDarkMode={setDarkMode}
-      />
+  if (loading) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "#f8fafc",
+        }}
+      >
+        <div style={{ textAlign: "center" }}>
+          <p style={{ fontSize: "28px", marginBottom: "12px" }}>🔔</p>
+          <p style={{ fontSize: "14px", color: "#94a3b8" }}>
+            Loading your profile...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
-      {/* Main Content */}
-      <div style={{ flex: 1, overflowY: "auto" }}>
-        {!user ? (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              minHeight: "100vh",
-            }}
-          >
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
+  return (
+    <AuthGuard>
+      <div
+        style={{
+          display: "flex",
+          minHeight: "100vh",
+          background: "var(--bg-tertiary)",
+          color: "var(--text-primary)",
+          transition: "all 0.3s ease",
+        }}
+      >
+        <Sidebar
+          user={user}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          darkMode={darkMode}
+          setDarkMode={setDarkMode}
+          onLogout={logout}
+        />
+
+        <div style={{ flex: 1, overflowY: "auto" }}>
+          {error && (
+            <div
               style={{
-                background: "var(--bg-card)",
-                borderRadius: "20px",
-                padding: "48px 40px",
-                textAlign: "center",
-                border: "1px solid var(--border)",
-                boxShadow: "var(--shadow-md)",
-                maxWidth: "400px",
-                width: "100%",
-                margin: "0 32px",
+                background: "#fef2f2",
+                border: "1px solid #fecaca",
+                color: "#dc2626",
+                padding: "10px 14px",
+                margin: "16px",
+                borderRadius: "10px",
+                fontSize: "13px",
               }}
             >
-              <div
-                style={{
-                  width: "64px",
-                  height: "64px",
-                  borderRadius: "16px",
-                  background: "var(--accent-light)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "28px",
-                  margin: "0 auto 20px",
-                }}
-              >
-                🔔
-              </div>
-              <h2
-                style={{
-                  fontSize: "22px",
-                  fontWeight: "600",
-                  color: "var(--text-primary)",
-                  margin: "0 0 8px",
-                }}
-              >
-                Welcome to NotifManager
-              </h2>
-              <p
-                style={{
-                  fontSize: "14px",
-                  color: "var(--text-secondary)",
-                  margin: "0 0 28px",
-                  lineHeight: "1.6",
-                }}
-              >
-                Take control of your notifications based on what you're doing
-              </p>
+              {error}
+            </div>
+          )}
 
-              {error && (
-                <div
-                  style={{
-                    background: "#fef2f2",
-                    border: "1px solid #fecaca",
-                    color: "#dc2626",
-                    padding: "10px 14px",
-                    borderRadius: "10px",
-                    fontSize: "13px",
-                    marginBottom: "16px",
-                  }}
-                >
-                  {error}
-                </div>
-              )}
-
-              <motion.button
-                onClick={createUser}
-                disabled={loading}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                style={{
-                  width: "100%",
-                  padding: "12px",
-                  borderRadius: "12px",
-                  border: "none",
-                  background: "var(--accent)",
-                  color: "white",
-                  fontSize: "14px",
-                  fontWeight: "600",
-                  cursor: "pointer",
-                  transition: "background 0.2s ease",
-                }}
-              >
-                {loading ? "Loading..." : "Get Started →"}
-              </motion.button>
-
-              {/* Theme toggle on landing */}
-              <button
-                onClick={() => setDarkMode(!darkMode)}
-                style={{
-                  marginTop: "16px",
-                  background: "none",
-                  border: "1px solid var(--border)",
-                  borderRadius: "8px",
-                  padding: "6px 14px",
-                  cursor: "pointer",
-                  fontSize: "12px",
-                  color: "var(--text-muted)",
-                }}
-              >
-                {darkMode ? "☀️ Light mode" : "🌙 Dark mode"}
-              </button>
-            </motion.div>
-          </div>
-        ) : (
           <AnimatePresence mode="wait">
             {activeTab === "dashboard" && (
               <motion.div
@@ -292,8 +220,8 @@ export default function Home() {
               </motion.div>
             )}
           </AnimatePresence>
-        )}
+        </div>
       </div>
-    </div>
+    </AuthGuard>
   );
 }

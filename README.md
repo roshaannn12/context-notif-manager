@@ -1,3 +1,6 @@
+## 🌐 Live Demo
+- **Frontend:** https://context-notif-manager-1a7dar0a8-roshan13.vercel.app
+- **Backend:** https://context-notif-manager-backend.onrender.com
 # 🔔 Context-Aware Notification Manager
 
 A full-stack web app that intelligently filters and manages notifications based on your current context — Work, Leisure, Sleep, Focus, or Commute.

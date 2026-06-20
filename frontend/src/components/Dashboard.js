@@ -1,0 +1,396 @@
+"use client";
+import { motion } from "framer-motion";
+
+const CONTEXT_COLORS = {
+  Work: { bg: "#eff6ff", text: "#3b82f6", dark: "#1e3a5f" },
+  Leisure: { bg: "#f0fdf4", text: "#22c55e", dark: "#052e16" },
+  Sleep: { bg: "#faf5ff", text: "#a855f7", dark: "#2e1065" },
+  Focus: { bg: "#fff7ed", text: "#f97316", dark: "#431407" },
+  Commute: { bg: "#fefce8", text: "#eab308", dark: "#1a1200" },
+};
+
+const CONTEXT_ICONS = {
+  Work: "💼",
+  Leisure: "🎮",
+  Sleep: "😴",
+  Focus: "🎯",
+  Commute: "🚗",
+};
+
+const ACTION_COLORS = {
+  allow: { bg: "#f0fdf4", text: "#16a34a", border: "#bbf7d0" },
+  mute: { bg: "#fef2f2", text: "#dc2626", border: "#fecaca" },
+  snooze: { bg: "#fffbeb", text: "#d97706", border: "#fde68a" },
+};
+
+const ACTION_COLORS_DARK = {
+  allow: { bg: "#052e16", text: "#4ade80", border: "#14532d" },
+  mute: { bg: "#2d0a0a", text: "#f87171", border: "#7f1d1d" },
+  snooze: { bg: "#2d1a00", text: "#fbbf24", border: "#78350f" },
+};
+
+const APP_ICONS = {
+  Instagram: "📸",
+  Gmail: "📧",
+  Slack: "💬",
+  WhatsApp: "📱",
+  YouTube: "▶️",
+  Twitter: "🐦",
+  Discord: "🎮",
+  Telegram: "✈️",
+};
+
+const FAKE_NOTIFICATIONS = [
+  {
+    id: 1,
+    app: "Instagram",
+    message: "John liked your photo",
+    time: "just now",
+  },
+  {
+    id: 2,
+    app: "Gmail",
+    message: "New email from your manager",
+    time: "1m ago",
+  },
+  { id: 3, app: "Slack", message: "Team standup in 5 minutes", time: "2m ago" },
+  {
+    id: 4,
+    app: "WhatsApp",
+    message: "Mom: Are you coming home?",
+    time: "3m ago",
+  },
+  {
+    id: 5,
+    app: "YouTube",
+    message: "Your favorite creator posted",
+    time: "5m ago",
+  },
+  {
+    id: 6,
+    app: "Twitter",
+    message: "You have 10 new mentions",
+    time: "7m ago",
+  },
+  {
+    id: 7,
+    app: "Discord",
+    message: "New message in #general",
+    time: "10m ago",
+  },
+  { id: 8, app: "Telegram", message: "New message from Alex", time: "12m ago" },
+];
+
+const CONTEXTS = ["Work", "Leisure", "Sleep", "Focus", "Commute"];
+
+export default function Dashboard({ user, rules, switchContext, darkMode }) {
+  const getStatus = (appName) => {
+    const rule = rules.find(
+      (r) => r.appName === appName && r.context === user.currentContext,
+    );
+    return rule ? rule.action : "allow";
+  };
+
+  const getStats = () => {
+    const current = rules.filter((r) => r.context === user.currentContext);
+    return {
+      muted: current.filter((r) => r.action === "mute").length,
+      snoozed: current.filter((r) => r.action === "snooze").length,
+      allowed: current.filter((r) => r.action === "allow").length,
+    };
+  };
+
+  const stats = getStats();
+  const actionColors = darkMode ? ACTION_COLORS_DARK : ACTION_COLORS;
+
+  return (
+    <div style={{ padding: "32px", flex: 1, overflowY: "auto" }}>
+      {/* Header */}
+      <div style={{ marginBottom: "28px" }}>
+        <h2
+          style={{
+            fontSize: "22px",
+            fontWeight: "600",
+            color: "var(--text-primary)",
+            margin: "0 0 4px",
+          }}
+        >
+          Dashboard
+        </h2>
+        <p
+          style={{
+            fontSize: "13px",
+            color: "var(--text-secondary)",
+            margin: 0,
+          }}
+        >
+          You're in{" "}
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+              padding: "2px 10px",
+              borderRadius: "20px",
+              fontSize: "12px",
+              fontWeight: "600",
+              background: darkMode
+                ? "var(--accent-light)"
+                : CONTEXT_COLORS[user.currentContext]?.bg,
+              color: CONTEXT_COLORS[user.currentContext]?.text,
+            }}
+          >
+            {CONTEXT_ICONS[user.currentContext]} {user.currentContext}
+          </span>{" "}
+          mode
+        </p>
+      </div>
+
+      {/* Context Switcher */}
+      <div
+        style={{
+          background: "var(--bg-card)",
+          borderRadius: "14px",
+          padding: "20px",
+          marginBottom: "20px",
+          border: "1px solid var(--border)",
+          boxShadow: "var(--shadow)",
+        }}
+      >
+        <p
+          style={{
+            fontSize: "11px",
+            fontWeight: "600",
+            color: "var(--text-muted)",
+            marginBottom: "12px",
+            letterSpacing: "0.06em",
+          }}
+        >
+          SWITCH CONTEXT
+        </p>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(5, 1fr)",
+            gap: "8px",
+          }}
+        >
+          {CONTEXTS.map((context) => {
+            const isActive = user.currentContext === context;
+            return (
+              <motion.button
+                key={context}
+                onClick={() => switchContext(context)}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                style={{
+                  padding: "10px 6px",
+                  borderRadius: "10px",
+                  border: isActive
+                    ? `2px solid ${CONTEXT_COLORS[context]?.text}`
+                    : "1px solid var(--border)",
+                  background: isActive
+                    ? darkMode
+                      ? "var(--accent-light)"
+                      : CONTEXT_COLORS[context]?.bg
+                    : "var(--bg-secondary)",
+                  color: isActive
+                    ? CONTEXT_COLORS[context]?.text
+                    : "var(--text-secondary)",
+                  fontSize: "12px",
+                  fontWeight: isActive ? "600" : "400",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+              >
+                <span style={{ fontSize: "18px" }}>
+                  {CONTEXT_ICONS[context]}
+                </span>
+                {context}
+              </motion.button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gap: "12px",
+          marginBottom: "20px",
+        }}
+      >
+        {[
+          {
+            label: "Muted",
+            value: stats.muted,
+            color: "#dc2626",
+            lightBg: "#fef2f2",
+            darkBg: "#2d0a0a",
+            icon: "🔇",
+          },
+          {
+            label: "Snoozed",
+            value: stats.snoozed,
+            color: "#d97706",
+            lightBg: "#fffbeb",
+            darkBg: "#2d1a00",
+            icon: "⏰",
+          },
+          {
+            label: "Allowed",
+            value: stats.allowed,
+            color: "#16a34a",
+            lightBg: "#f0fdf4",
+            darkBg: "#052e16",
+            icon: "✅",
+          },
+        ].map((stat, i) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.08 }}
+            style={{
+              background: darkMode ? stat.darkBg : stat.lightBg,
+              borderRadius: "14px",
+              padding: "20px",
+              border: "1px solid var(--border)",
+              boxShadow: "var(--shadow)",
+            }}
+          >
+            <div style={{ fontSize: "22px", marginBottom: "8px" }}>
+              {stat.icon}
+            </div>
+            <p
+              style={{
+                fontSize: "28px",
+                fontWeight: "700",
+                color: stat.color,
+                margin: "0 0 2px",
+              }}
+            >
+              {stat.value}
+            </p>
+            <p
+              style={{
+                fontSize: "12px",
+                color: "var(--text-secondary)",
+                margin: 0,
+              }}
+            >
+              Apps {stat.label}
+            </p>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Notification Feed */}
+      <div
+        style={{
+          background: "var(--bg-card)",
+          borderRadius: "14px",
+          padding: "20px",
+          border: "1px solid var(--border)",
+          boxShadow: "var(--shadow)",
+        }}
+      >
+        <p
+          style={{
+            fontSize: "11px",
+            fontWeight: "600",
+            color: "var(--text-muted)",
+            marginBottom: "14px",
+            letterSpacing: "0.06em",
+          }}
+        >
+          INCOMING NOTIFICATIONS
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          {FAKE_NOTIFICATIONS.map((notif, i) => {
+            const status = getStatus(notif.app);
+            const colors = actionColors[status];
+            return (
+              <motion.div
+                key={notif.id}
+                initial={{ opacity: 0, x: -16 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.04 }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "10px 14px",
+                  borderRadius: "10px",
+                  border: `1px solid ${colors.border}`,
+                  background: colors.bg,
+                  opacity: status === "mute" ? 0.5 : 1,
+                  transition: "all 0.2s ease",
+                }}
+              >
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "10px" }}
+                >
+                  <span style={{ fontSize: "18px" }}>
+                    {APP_ICONS[notif.app]}
+                  </span>
+                  <div>
+                    <p
+                      style={{
+                        fontSize: "13px",
+                        fontWeight: "600",
+                        color: "var(--text-primary)",
+                        margin: 0,
+                      }}
+                    >
+                      {notif.app}
+                    </p>
+                    <p
+                      style={{
+                        fontSize: "11px",
+                        color: "var(--text-secondary)",
+                        margin: 0,
+                      }}
+                    >
+                      {status === "mute"
+                        ? "🔇 Notification muted"
+                        : notif.message}
+                    </p>
+                  </div>
+                </div>
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                >
+                  <span
+                    style={{ fontSize: "11px", color: "var(--text-muted)" }}
+                  >
+                    {notif.time}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: "600",
+                      padding: "2px 8px",
+                      borderRadius: "20px",
+                      background: colors.bg,
+                      color: colors.text,
+                      border: `1px solid ${colors.border}`,
+                    }}
+                  >
+                    {status}
+                  </span>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}

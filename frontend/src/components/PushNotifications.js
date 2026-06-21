@@ -144,6 +144,8 @@ export default function PushNotifications({ user, darkMode }) {
         flex: 1,
         overflowY: "auto",
         minHeight: "100vh",
+        background: darkMode ? "#0f172a" : "#f8fafc",
+        color: darkMode ? "#f1f5f9" : "#0f172a",
       }}
     >
       {/* Header */}

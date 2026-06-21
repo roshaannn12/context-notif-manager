@@ -1,441 +1,251 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
-import Sidebar from "@/components/Sidebar";
-import Dashboard from "@/components/Dashboard";
-import Rules from "@/components/Rules";
-import Analytics from "@/components/Analytics";
-import AuthGuard from "@/components/AuthGuard";
-import VipContacts from "@/components/VipContacts";
-import CustomContextModal from "@/components/CustomContextModal";
-import PushNotifications from "@/components/PushNotifications";
+import Link from "next/link";
+import { motion } from "framer-motion";
 
-const NAV_ITEMS = [
-  { id: "dashboard", label: "Dashboard", icon: "📊" },
-  { id: "rules", label: "Rules", icon: "⚙️" },
-  { id: "vip", label: "VIP", icon: "⭐" },
-  { id: "push", label: "Notifications", icon: "🔔" },
-  { id: "analytics", label: "Analytics", icon: "📈" },
-];
-
-export default function Home() {
+export default function Login() {
   const router = useRouter();
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
-  const [rules, setRules] = useState([]);
-  const [newRule, setNewRule] = useState({
-    appName: "Instagram",
-    context: "Work",
-    action: "mute",
-  });
-  const [rulesLoading, setRulesLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
-  const [customContexts, setCustomContexts] = useState([]);
-  const [showContextModal, setShowContextModal] = useState(false);
-  const [vipContacts, setVipContacts] = useState([]);
-  const [duplicateError, setDuplicateError] = useState(null);
 
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  }, [darkMode]);
-
-  useEffect(() => {
-    const loadUser = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setLoading(false);
-        router.push("/login");
-        return;
-      }
-      try {
-        const res = await axios.get(
-          "https://context-notif-manager-backend.onrender.com/api/auth/me",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        );
-        setUser(res.data);
-      } catch {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        router.push("/login");
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadUser();
-  }, []);
-
-  const switchContext = async (context) => {
-    const token = localStorage.getItem("token");
-    try {
-      const res = await axios.put(
-        "https://context-notif-manager-backend.onrender.com/api/auth/context",
-        { context },
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
-      setUser(res.data);
-    } catch {
-      setError("Failed to switch context!");
-    }
-  };
-
-  const fetchRules = async (userId) => {
-    setRulesLoading(true);
-    try {
-      const res = await axios.get(
-        `https://context-notif-manager-backend.onrender.com/api/rules/${userId}`,
-      );
-      setRules(res.data);
-    } catch {
-      setError("Failed to fetch rules!");
-    }
-    setRulesLoading(false);
-  };
-
-  const addRule = async () => {
+  const handleSubmit = async () => {
+    setLoading(true);
     setError(null);
-    setDuplicateError(null);
     try {
       const res = await axios.post(
-        "https://context-notif-manager-backend.onrender.com/api/rules",
-        {
-          userId: user._id,
-          ...newRule,
-        },
+        "https://context-notif-manager-backend.onrender.com/api/auth/login",
+        { identifier, password },
       );
-      if (res.data.updated) {
-        setRules(
-          rules.map((r) =>
-            r.appName === res.data.appName && r.context === res.data.context
-              ? res.data
-              : r,
-          ),
-        );
-      } else {
-        setRules([...rules, res.data]);
-      }
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("user", JSON.stringify(res.data));
+      router.push("/");
     } catch (err) {
-      if (err.response?.status === 400) {
-        setDuplicateError(err.response.data.message);
-      } else {
-        setError("Failed to add rule!");
-      }
+      setError(err.response?.data?.message || "Something went wrong!");
     }
-  };
-
-  const deleteRule = async (ruleId) => {
-    try {
-      await axios.delete(
-        `https://context-notif-manager-backend.onrender.com/api/rules/${ruleId}`,
-      );
-      setRules(rules.filter((r) => r._id !== ruleId));
-    } catch {
-      setError("Failed to delete rule!");
-    }
-  };
-
-  const fetchCustomContexts = async (userId) => {
-    try {
-      const res = await axios.get(
-        `https://context-notif-manager-backend.onrender.com/api/contexts/${userId}`,
-      );
-      setCustomContexts(res.data);
-    } catch {
-      console.error("Failed to fetch custom contexts");
-    }
-  };
-
-  const addCustomContext = async (contextData) => {
-    try {
-      const res = await axios.post(
-        "https://context-notif-manager-backend.onrender.com/api/contexts",
-        contextData,
-      );
-      setCustomContexts([...customContexts, res.data]);
-      setShowContextModal(false);
-    } catch (err) {
-      if (err.response?.status === 400) {
-        setError(err.response.data.message);
-      } else {
-        setError("Failed to create context!");
-      }
-    }
-  };
-
-  const deleteCustomContext = async (contextId) => {
-    try {
-      await axios.delete(
-        `https://context-notif-manager-backend.onrender.com/api/contexts/${contextId}`,
-      );
-      setCustomContexts(customContexts.filter((c) => c._id !== contextId));
-    } catch {
-      setError("Failed to delete context!");
-    }
-  };
-
-  const fetchVipContacts = async (userId) => {
-    try {
-      const res = await axios.get(
-        `https://context-notif-manager-backend.onrender.com/api/vip/${userId}`,
-      );
-      setVipContacts(res.data);
-    } catch {
-      console.error("Failed to fetch VIP contacts");
-    }
-  };
-
-  const addVipContact = async (contactData) => {
-    try {
-      const res = await axios.post(
-        "https://context-notif-manager-backend.onrender.com/api/vip",
-        {
-          userId: user._id,
-          ...contactData,
-        },
-      );
-      setVipContacts([...vipContacts, res.data]);
-    } catch (err) {
-      if (err.response?.status === 400) {
-        return { error: err.response.data.message };
-      }
-      return { error: "Failed to add VIP contact!" };
-    }
-  };
-
-  const deleteVipContact = async (contactId) => {
-    try {
-      await axios.delete(
-        `https://context-notif-manager-backend.onrender.com/api/vip/${contactId}`,
-      );
-      setVipContacts(vipContacts.filter((c) => c._id !== contactId));
-    } catch {
-      setError("Failed to delete VIP contact!");
-    }
-  };
-
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    router.push("/login");
-  };
-
-  useEffect(() => {
-    if (user) {
-      fetchRules(user._id);
-      fetchCustomContexts(user._id);
-      fetchVipContacts(user._id);
-    }
-  }, [user]);
-
-  if (loading) {
-    return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#f8fafc",
-        }}
-      >
-        <div style={{ textAlign: "center" }}>
-          <p style={{ fontSize: "28px", marginBottom: "12px" }}>🔔</p>
-          <p style={{ fontSize: "14px", color: "#94a3b8" }}>
-            Loading your profile...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  const renderContent = () => {
-    switch (activeTab) {
-      case "dashboard":
-        return (
-          <Dashboard
-            user={user}
-            rules={rules}
-            switchContext={switchContext}
-            darkMode={darkMode}
-            customContexts={customContexts}
-            onAddContext={() => setShowContextModal(true)}
-            onDeleteContext={deleteCustomContext}
-          />
-        );
-      case "rules":
-        return (
-          <Rules
-            rules={rules}
-            newRule={newRule}
-            setNewRule={setNewRule}
-            addRule={addRule}
-            deleteRule={deleteRule}
-            rulesLoading={rulesLoading}
-            darkMode={darkMode}
-            duplicateError={duplicateError}
-            setDuplicateError={setDuplicateError}
-          />
-        );
-      case "vip":
-        return (
-          <VipContacts
-            vipContacts={vipContacts}
-            onAdd={addVipContact}
-            onDelete={deleteVipContact}
-            darkMode={darkMode}
-          />
-        );
-      case "analytics":
-        return <Analytics rules={rules} darkMode={darkMode} />;
-      case "push":
-        return <PushNotifications user={user} darkMode={darkMode} />;
-      default:
-        return null;
-    }
+    setLoading(false);
   };
 
   return (
-    <AuthGuard>
-      <div
+    <div
+      style={{
+        minHeight: "100vh",
+        background: darkMode ? "#0f172a" : "#f8fafc",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        transition: "all 0.3s ease",
+      }}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
         style={{
-          display: "flex",
-          minHeight: "100vh",
-          background: "var(--bg-tertiary)",
-          color: "var(--text-primary)",
-          transition: "all 0.3s ease",
-          overflow: "hidden",
+          background: darkMode ? "#1e293b" : "#ffffff",
+          borderRadius: "20px",
+          padding: "40px",
           width: "100%",
+          maxWidth: "400px",
+          margin: "0 16px",
+          border: `1px solid ${darkMode ? "#334155" : "#e2e8f0"}`,
+          boxShadow: "0 4px 6px rgba(0,0,0,0.07)",
         }}
       >
-        {/* Sidebar - desktop only */}
         <div
-          className="desktop-sidebar"
           style={{
             display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            marginBottom: "28px",
           }}
         >
-          <Sidebar
-            user={user}
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            darkMode={darkMode}
-            setDarkMode={setDarkMode}
-            onLogout={logout}
-          />
-        </div>
-
-        {/* Main Content */}
-        <div className="main-content" style={{ flex: 1, overflowY: "auto" }}>
-          {error && (
+          <div>
             <div
               style={{
-                background: "#fef2f2",
-                border: "1px solid #fecaca",
-                color: "#dc2626",
-                padding: "10px 14px",
-                margin: "16px",
-                borderRadius: "10px",
-                fontSize: "13px",
-              }}
-            >
-              {error}
-            </div>
-          )}
-
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, x: 16 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -16 }}
-              transition={{ duration: 0.18 }}
-              style={{ height: "100%" }}
-            >
-              {renderContent()}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-
-        {/* Mobile Bottom Navigation */}
-        <div
-          className="mobile-nav"
-          style={{
-            position: "fixed",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            background: "var(--bg-card)",
-            borderTop: "1px solid var(--border)",
-            padding: "8px 0",
-            justifyContent: "space-around",
-            alignItems: "center",
-            zIndex: 100,
-          }}
-        >
-          {NAV_ITEMS.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              style={{
+                width: "48px",
+                height: "48px",
+                borderRadius: "12px",
+                background: darkMode ? "#1e3a5f" : "#eff6ff",
                 display: "flex",
-                flexDirection: "column",
                 alignItems: "center",
-                gap: "3px",
-                padding: "6px 12px",
-                borderRadius: "10px",
-                border: "none",
-                background: "transparent",
-                color:
-                  activeTab === item.id ? "var(--accent)" : "var(--text-muted)",
-                fontSize: "10px",
-                fontWeight: activeTab === item.id ? "600" : "400",
-                cursor: "pointer",
+                justifyContent: "center",
+                fontSize: "22px",
+                marginBottom: "14px",
               }}
             >
-              <span style={{ fontSize: "20px" }}>{item.icon}</span>
-              {item.label}
-            </button>
-          ))}
+              🔔
+            </div>
+            <h1
+              style={{
+                fontSize: "20px",
+                fontWeight: "600",
+                color: darkMode ? "#f1f5f9" : "#0f172a",
+                margin: "0 0 4px",
+              }}
+            >
+              Welcome back
+            </h1>
+            <p
+              style={{
+                fontSize: "13px",
+                color: darkMode ? "#94a3b8" : "#475569",
+                margin: 0,
+              }}
+            >
+              Sign in to NotifManager
+            </p>
+          </div>
           <button
-            onClick={logout}
+            onClick={() => setDarkMode(!darkMode)}
             style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "3px",
-              padding: "6px 12px",
-              borderRadius: "10px",
-              border: "none",
+              width: "32px",
+              height: "32px",
+              borderRadius: "8px",
+              border: `1px solid ${darkMode ? "#334155" : "#e2e8f0"}`,
               background: "transparent",
-              color: "var(--text-muted)",
-              fontSize: "10px",
               cursor: "pointer",
+              fontSize: "14px",
             }}
           >
-            <span style={{ fontSize: "20px" }}>🚪</span>
-            Logout
+            {darkMode ? "☀️" : "🌙"}
           </button>
         </div>
 
-        {/* Custom Context Modal */}
-        {showContextModal && (
-          <CustomContextModal
-            userId={user?._id}
-            onClose={() => setShowContextModal(false)}
-            onAdd={addCustomContext}
-            darkMode={darkMode}
-          />
+        {error && (
+          <div
+            style={{
+              background: "#fef2f2",
+              border: "1px solid #fecaca",
+              color: "#dc2626",
+              padding: "10px 14px",
+              borderRadius: "10px",
+              fontSize: "13px",
+              marginBottom: "16px",
+            }}
+          >
+            {error}
+          </div>
         )}
-      </div>
-    </AuthGuard>
+
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "14px",
+            marginBottom: "20px",
+          }}
+        >
+          <div>
+            <label
+              style={{
+                fontSize: "12px",
+                fontWeight: "600",
+                color: darkMode ? "#94a3b8" : "#475569",
+                display: "block",
+                marginBottom: "6px",
+                letterSpacing: "0.04em",
+              }}
+            >
+              EMAIL OR PHONE
+            </label>
+            <input
+              type="text"
+              placeholder="you@example.com or 9876543210"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "10px 14px",
+                borderRadius: "10px",
+                fontSize: "13px",
+                border: `1px solid ${darkMode ? "#334155" : "#e2e8f0"}`,
+                background: darkMode ? "#0f172a" : "#f8fafc",
+                color: darkMode ? "#f1f5f9" : "#0f172a",
+                outline: "none",
+                boxSizing: "border-box",
+              }}
+            />
+          </div>
+          <div>
+            <label
+              style={{
+                fontSize: "12px",
+                fontWeight: "600",
+                color: darkMode ? "#94a3b8" : "#475569",
+                display: "block",
+                marginBottom: "6px",
+                letterSpacing: "0.04em",
+              }}
+            >
+              PASSWORD
+            </label>
+            <input
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+              style={{
+                width: "100%",
+                padding: "10px 14px",
+                borderRadius: "10px",
+                fontSize: "13px",
+                border: `1px solid ${darkMode ? "#334155" : "#e2e8f0"}`,
+                background: darkMode ? "#0f172a" : "#f8fafc",
+                color: darkMode ? "#f1f5f9" : "#0f172a",
+                outline: "none",
+                boxSizing: "border-box",
+              }}
+            />
+          </div>
+        </div>
+
+        <motion.button
+          onClick={handleSubmit}
+          disabled={loading}
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.99 }}
+          style={{
+            width: "100%",
+            padding: "12px",
+            borderRadius: "10px",
+            border: "none",
+            background: "#3b82f6",
+            color: "white",
+            fontSize: "14px",
+            fontWeight: "600",
+            cursor: "pointer",
+            marginBottom: "16px",
+          }}
+        >
+          {loading ? "Signing in..." : "Sign In →"}
+        </motion.button>
+
+        <p
+          style={{
+            textAlign: "center",
+            fontSize: "13px",
+            color: darkMode ? "#94a3b8" : "#475569",
+            margin: 0,
+          }}
+        >
+          Don't have an account?{" "}
+          <Link
+            href="/register"
+            style={{
+              color: "#3b82f6",
+              fontWeight: "600",
+              textDecoration: "none",
+            }}
+          >
+            Sign up
+          </Link>
+        </p>
+      </motion.div>
+    </div>
   );
 }

@@ -10,11 +10,13 @@ import Analytics from "@/components/Analytics";
 import AuthGuard from "@/components/AuthGuard";
 import VipContacts from "@/components/VipContacts";
 import CustomContextModal from "@/components/CustomContextModal";
+import PushNotifications from "@/components/PushNotifications";
 
 const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: "📊" },
   { id: "rules", label: "Rules", icon: "⚙️" },
   { id: "vip", label: "VIP", icon: "⭐" },
+  { id: "push", label: "Notifications", icon: "🔔" },
   { id: "analytics", label: "Analytics", icon: "📈" },
 ];
 
@@ -292,6 +294,8 @@ export default function Home() {
         );
       case "analytics":
         return <Analytics rules={rules} darkMode={darkMode} />;
+      case "push":
+        return <PushNotifications user={user} darkMode={darkMode} />;
       default:
         return null;
     }

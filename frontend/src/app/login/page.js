@@ -66,8 +66,9 @@ export default function Home() {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         router.push("/login");
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     loadUser();
   }, []);

@@ -139,7 +139,12 @@ export default function PushNotifications({ user, darkMode }) {
 
   return (
     <div
-      style={{ padding: "clamp(16px, 4vw, 32px)", flex: 1, overflowY: "auto" }}
+      style={{
+        padding: "clamp(16px, 4vw, 32px)",
+        flex: 1,
+        overflowY: "auto",
+        minHeight: "100vh",
+      }}
     >
       {/* Header */}
       <div style={{ marginBottom: "28px" }}>

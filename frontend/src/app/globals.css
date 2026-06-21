@@ -106,10 +106,13 @@ body {
 
   .mobile-header {
     display: flex !important;
+    align-items: center !important;
   }
 
   .main-content {
-    padding-bottom: 70px !important;
+    padding-bottom: 80px !important;
+    width: 100% !important;
+    min-width: 0 !important;
   }
 
   .stats-grid {

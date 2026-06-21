@@ -306,6 +306,8 @@ export default function Home() {
           background: "var(--bg-tertiary)",
           color: "var(--text-primary)",
           transition: "all 0.3s ease",
+          overflow: "hidden",
+          width: "100%",
         }}
       >
         {/* Sidebar - desktop only */}

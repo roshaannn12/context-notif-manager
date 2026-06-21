@@ -311,7 +311,12 @@ export default function Home() {
         }}
       >
         {/* Sidebar - desktop only */}
-        <div className="desktop-sidebar">
+        <div
+          className="desktop-sidebar"
+          style={{
+            display: "flex",
+          }}
+        >
           <Sidebar
             user={user}
             activeTab={activeTab}

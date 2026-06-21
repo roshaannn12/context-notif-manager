@@ -43,6 +43,7 @@ export default function Sidebar({
         flexDirection: "column",
         padding: "20px 16px",
         transition: "all 0.3s ease",
+        flexShrink: 0,
       }}
     >
       {/* Logo */}

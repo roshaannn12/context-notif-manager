@@ -4,11 +4,11 @@ import { useState, useEffect } from "react";
 import { io } from "socket.io-client";
 
 const CONTEXT_COLORS = {
-  Work: { bg: "#eff6ff", text: "#3b82f6", dark: "#1e3a5f" },
-  Leisure: { bg: "#f0fdf4", text: "#22c55e", dark: "#052e16" },
-  Sleep: { bg: "#faf5ff", text: "#a855f7", dark: "#2e1065" },
-  Focus: { bg: "#fff7ed", text: "#f97316", dark: "#431407" },
-  Commute: { bg: "#fefce8", text: "#eab308", dark: "#1a1200" },
+  Work: { bg: "#eff6ff", text: "#3b82f6" },
+  Leisure: { bg: "#f0fdf4", text: "#22c55e" },
+  Sleep: { bg: "#faf5ff", text: "#a855f7" },
+  Focus: { bg: "#fff7ed", text: "#f97316" },
+  Commute: { bg: "#fefce8", text: "#eab308" },
 };
 
 const CONTEXT_ICONS = {
@@ -43,7 +43,6 @@ const APP_ICONS = {
 };
 
 const CONTEXTS = ["Work", "Leisure", "Sleep", "Focus", "Commute"];
-
 const MAX_NOTIFICATIONS = 12;
 
 export default function Dashboard({
@@ -66,7 +65,6 @@ export default function Dashboard({
     return rule ? rule.action : "allow";
   };
 
-  // Update stats when rules or context changes
   useEffect(() => {
     const current = rules.filter((r) => r.context === user.currentContext);
     setStats({
@@ -76,34 +74,67 @@ export default function Dashboard({
     });
   }, [rules, user.currentContext]);
 
-  // WebSocket connection
   useEffect(() => {
     const socket = io("https://context-notif-manager-backend.onrender.com");
-
-    socket.on("connect", () => {
-      setConnected(true);
-      console.log("Connected to WebSocket");
-    });
-
-    socket.on("disconnect", () => {
-      setConnected(false);
-    });
-
+    socket.on("connect", () => setConnected(true));
+    socket.on("disconnect", () => setConnected(false));
     socket.on("new-notification", (notif) => {
-      setNotifications((prev) => {
-        const updated = [notif, ...prev];
-        return updated.slice(0, MAX_NOTIFICATIONS);
-      });
+      setNotifications((prev) => [notif, ...prev].slice(0, MAX_NOTIFICATIONS));
     });
-
     return () => socket.disconnect();
   }, []);
 
   const actionColors = darkMode ? ACTION_COLORS_DARK : ACTION_COLORS;
 
   return (
-    <div style={{ padding: "32px", flex: 1, overflowY: "auto" }}>
-      {/* Header */}
+    <div
+      style={{ padding: "clamp(16px, 4vw, 32px)", flex: 1, overflowY: "auto" }}
+    >
+      {/* Mobile Header */}
+      <div
+        className="mobile-header"
+        style={{
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: "20px",
+          padding: "12px 16px",
+          background: "var(--bg-card)",
+          borderRadius: "14px",
+          border: "1px solid var(--border)",
+        }}
+      >
+        <div>
+          <p
+            style={{
+              fontSize: "16px",
+              fontWeight: "700",
+              color: "var(--text-primary)",
+              margin: 0,
+            }}
+          >
+            🔔 NotifManager
+          </p>
+          <p
+            style={{ fontSize: "12px", color: "var(--text-muted)", margin: 0 }}
+          >
+            Hi {user.name}! 👋
+          </p>
+        </div>
+        <span
+          style={{
+            fontSize: "11px",
+            fontWeight: "600",
+            padding: "4px 10px",
+            borderRadius: "20px",
+            background: CONTEXT_COLORS[user.currentContext]?.bg || "#eff6ff",
+            color: CONTEXT_COLORS[user.currentContext]?.text || "#3b82f6",
+          }}
+        >
+          {CONTEXT_ICONS[user.currentContext] || "⭐"} {user.currentContext}
+        </span>
+      </div>
+
+      {/* Desktop Header */}
       <div
         style={{
           marginBottom: "28px",
@@ -142,17 +173,15 @@ export default function Dashboard({
                 fontWeight: "600",
                 background: darkMode
                   ? "var(--accent-light)"
-                  : CONTEXT_COLORS[user.currentContext]?.bg,
-                color: CONTEXT_COLORS[user.currentContext]?.text,
+                  : CONTEXT_COLORS[user.currentContext]?.bg || "#eff6ff",
+                color: CONTEXT_COLORS[user.currentContext]?.text || "#3b82f6",
               }}
             >
-              {CONTEXT_ICONS[user.currentContext]} {user.currentContext}
+              {CONTEXT_ICONS[user.currentContext] || "⭐"} {user.currentContext}
             </span>{" "}
             mode
           </p>
         </div>
-
-        {/* Live indicator */}
         <div
           style={{
             display: "flex",
@@ -185,7 +214,6 @@ export default function Dashboard({
         </div>
       </div>
 
-      {/* Pulse animation */}
       <style>{`
         @keyframes pulse {
           0%, 100% { opacity: 1; transform: scale(1); }
@@ -194,67 +222,50 @@ export default function Dashboard({
       `}</style>
 
       {/* Context Switcher */}
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-        {/* Default Contexts */}
-        {CONTEXTS.map((context) => {
-          const isActive = user.currentContext === context;
-          return (
-            <motion.button
-              key={context}
-              onClick={() => switchContext(context)}
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              style={{
-                padding: "10px 16px",
-                borderRadius: "10px",
-                border: isActive
-                  ? `2px solid ${CONTEXT_COLORS[context]?.text}`
-                  : "1px solid var(--border)",
-                background: isActive
-                  ? darkMode
-                    ? "var(--accent-light)"
-                    : CONTEXT_COLORS[context]?.bg
-                  : "var(--bg-secondary)",
-                color: isActive
-                  ? CONTEXT_COLORS[context]?.text
-                  : "var(--text-secondary)",
-                fontSize: "12px",
-                fontWeight: isActive ? "600" : "400",
-                cursor: "pointer",
-                transition: "all 0.2s ease",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-              }}
-            >
-              <span>{CONTEXT_ICONS[context]}</span>
-              {context}
-            </motion.button>
-          );
-        })}
-
-        {/* Custom Contexts */}
-        {customContexts.map((context) => {
-          const isActive = user.currentContext === context.name;
-          return (
-            <div
-              key={context._id}
-              style={{ position: "relative", display: "inline-flex" }}
-            >
+      <div
+        style={{
+          background: "var(--bg-card)",
+          borderRadius: "14px",
+          padding: "16px",
+          marginBottom: "20px",
+          border: "1px solid var(--border)",
+          boxShadow: "var(--shadow)",
+        }}
+      >
+        <p
+          style={{
+            fontSize: "11px",
+            fontWeight: "600",
+            color: "var(--text-muted)",
+            marginBottom: "12px",
+            letterSpacing: "0.06em",
+          }}
+        >
+          SWITCH CONTEXT
+        </p>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+          {CONTEXTS.map((context) => {
+            const isActive = user.currentContext === context;
+            return (
               <motion.button
-                onClick={() => switchContext(context.name)}
+                key={context}
+                onClick={() => switchContext(context)}
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 style={{
-                  padding: "10px 16px",
+                  padding: "8px 12px",
                   borderRadius: "10px",
                   border: isActive
-                    ? `2px solid ${context.color}`
+                    ? `2px solid ${CONTEXT_COLORS[context]?.text}`
                     : "1px solid var(--border)",
                   background: isActive
-                    ? context.color + "20"
+                    ? darkMode
+                      ? "var(--accent-light)"
+                      : CONTEXT_COLORS[context]?.bg
                     : "var(--bg-secondary)",
-                  color: isActive ? context.color : "var(--text-secondary)",
+                  color: isActive
+                    ? CONTEXT_COLORS[context]?.text
+                    : "var(--text-secondary)",
                   fontSize: "12px",
                   fontWeight: isActive ? "600" : "400",
                   cursor: "pointer",
@@ -262,60 +273,96 @@ export default function Dashboard({
                   display: "flex",
                   alignItems: "center",
                   gap: "6px",
-                  paddingRight: "28px",
                 }}
               >
-                <span>{context.icon}</span>
-                {context.name}
+                <span>{CONTEXT_ICONS[context]}</span>
+                {context}
               </motion.button>
-              {/* Delete button */}
-              <button
-                onClick={() => onDeleteContext(context._id)}
-                style={{
-                  position: "absolute",
-                  right: "6px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: "10px",
-                  color: "var(--text-muted)",
-                  padding: "2px",
-                }}
-              >
-                ✕
-              </button>
-            </div>
-          );
-        })}
+            );
+          })}
 
-        {/* Add Context Button */}
-        <motion.button
-          onClick={onAddContext}
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          style={{
-            padding: "10px 16px",
-            borderRadius: "10px",
-            border: "1px dashed var(--border)",
-            background: "transparent",
-            color: "var(--text-muted)",
-            fontSize: "12px",
-            fontWeight: "500",
-            cursor: "pointer",
-            transition: "all 0.2s ease",
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-          }}
-        >
-          + Add Context
-        </motion.button>
+          {customContexts.map((context) => {
+            const isActive = user.currentContext === context.name;
+            return (
+              <div
+                key={context._id}
+                style={{ position: "relative", display: "inline-flex" }}
+              >
+                <motion.button
+                  onClick={() => switchContext(context.name)}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: "10px",
+                    border: isActive
+                      ? `2px solid ${context.color}`
+                      : "1px solid var(--border)",
+                    background: isActive
+                      ? context.color + "20"
+                      : "var(--bg-secondary)",
+                    color: isActive ? context.color : "var(--text-secondary)",
+                    fontSize: "12px",
+                    fontWeight: isActive ? "600" : "400",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    paddingRight: "28px",
+                  }}
+                >
+                  <span>{context.icon}</span>
+                  {context.name}
+                </motion.button>
+                <button
+                  onClick={() => onDeleteContext(context._id)}
+                  style={{
+                    position: "absolute",
+                    right: "6px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: "10px",
+                    color: "var(--text-muted)",
+                    padding: "2px",
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+            );
+          })}
+
+          <motion.button
+            onClick={onAddContext}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            style={{
+              padding: "8px 12px",
+              borderRadius: "10px",
+              border: "1px dashed var(--border)",
+              background: "transparent",
+              color: "var(--text-muted)",
+              fontSize: "12px",
+              fontWeight: "500",
+              cursor: "pointer",
+              transition: "all 0.2s ease",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+            }}
+          >
+            + Add Context
+          </motion.button>
+        </div>
       </div>
 
       {/* Stats */}
       <div
+        className="stats-grid"
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(3, 1fr)",
@@ -357,17 +404,17 @@ export default function Dashboard({
             style={{
               background: darkMode ? stat.darkBg : stat.lightBg,
               borderRadius: "14px",
-              padding: "20px",
+              padding: "16px",
               border: "1px solid var(--border)",
               boxShadow: "var(--shadow)",
             }}
           >
-            <div style={{ fontSize: "22px", marginBottom: "8px" }}>
+            <div style={{ fontSize: "20px", marginBottom: "8px" }}>
               {stat.icon}
             </div>
             <p
               style={{
-                fontSize: "28px",
+                fontSize: "24px",
                 fontWeight: "700",
                 color: stat.color,
                 margin: "0 0 2px",
@@ -377,12 +424,12 @@ export default function Dashboard({
             </p>
             <p
               style={{
-                fontSize: "12px",
+                fontSize: "11px",
                 color: "var(--text-secondary)",
                 margin: 0,
               }}
             >
-              Apps {stat.label}
+              {stat.label}
             </p>
           </motion.div>
         ))}
@@ -393,7 +440,7 @@ export default function Dashboard({
         style={{
           background: "var(--bg-card)",
           borderRadius: "14px",
-          padding: "20px",
+          padding: "16px",
           border: "1px solid var(--border)",
           boxShadow: "var(--shadow)",
         }}
@@ -450,27 +497,26 @@ export default function Dashboard({
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
-                      padding: "10px 14px",
+                      padding: "10px 12px",
                       borderRadius: "10px",
                       border: `1px solid ${colors.border}`,
                       background: colors.bg,
-                      transition: "all 0.2s ease",
                     }}
                   >
                     <div
                       style={{
                         display: "flex",
                         alignItems: "center",
-                        gap: "10px",
+                        gap: "8px",
                       }}
                     >
-                      <span style={{ fontSize: "18px" }}>
+                      <span style={{ fontSize: "16px" }}>
                         {APP_ICONS[notif.app]}
                       </span>
                       <div>
                         <p
                           style={{
-                            fontSize: "13px",
+                            fontSize: "12px",
                             fontWeight: "600",
                             color: "var(--text-primary)",
                             margin: 0,
@@ -485,38 +531,24 @@ export default function Dashboard({
                             margin: 0,
                           }}
                         >
-                          {status === "mute"
-                            ? "🔇 Notification muted"
-                            : notif.message}
+                          {status === "mute" ? "🔇 Muted" : notif.message}
                         </p>
                       </div>
                     </div>
-                    <div
+                    <span
                       style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
+                        fontSize: "10px",
+                        fontWeight: "600",
+                        padding: "2px 6px",
+                        borderRadius: "20px",
+                        background: colors.bg,
+                        color: colors.text,
+                        border: `1px solid ${colors.border}`,
+                        flexShrink: 0,
                       }}
                     >
-                      <span
-                        style={{ fontSize: "11px", color: "var(--text-muted)" }}
-                      >
-                        {notif.time}
-                      </span>
-                      <span
-                        style={{
-                          fontSize: "11px",
-                          fontWeight: "600",
-                          padding: "2px 8px",
-                          borderRadius: "20px",
-                          background: colors.bg,
-                          color: colors.text,
-                          border: `1px solid ${colors.border}`,
-                        }}
-                      >
-                        {status}
-                      </span>
-                    </div>
+                      {status}
+                    </span>
                   </motion.div>
                 );
               })}

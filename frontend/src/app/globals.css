@@ -81,3 +81,44 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--border-hover);
 }
+
+/* Responsive */
+.desktop-sidebar {
+  display: flex !important;
+}
+
+.mobile-nav {
+  display: none !important;
+}
+
+.mobile-header {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .desktop-sidebar {
+    display: none !important;
+  }
+
+  .mobile-nav {
+    display: flex !important;
+  }
+
+  .mobile-header {
+    display: flex !important;
+  }
+
+  .main-content {
+    padding-bottom: 70px !important;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: repeat(1, 1fr) !important;
+  }
+}

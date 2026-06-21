@@ -5,34 +5,21 @@ import { useRouter } from "next/navigation";
 export default function AuthGuard({ children }) {
   const router = useRouter();
   const [checking, setChecking] = useState(true);
+  const [authorized, setAuthorized] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
       router.push("/login");
+      setChecking(false);
     } else {
+      setAuthorized(true);
       setChecking(false);
     }
   }, []);
 
-  if (checking) {
-    return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#f8fafc",
-        }}
-      >
-        <div style={{ textAlign: "center" }}>
-          <p style={{ fontSize: "28px", marginBottom: "12px" }}>🔔</p>
-          <p style={{ fontSize: "14px", color: "#94a3b8" }}>Loading...</p>
-        </div>
-      </div>
-    );
-  }
+  if (checking) return null;
+  if (!authorized) return null;
 
   return children;
 }

@@ -51,6 +51,7 @@ export default function Home() {
     const loadUser = async () => {
       const token = localStorage.getItem("token");
       if (!token) {
+        setLoading(false);
         router.push("/login");
         return;
       }

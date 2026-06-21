@@ -8,8 +8,17 @@ import Dashboard from "@/components/Dashboard";
 import Rules from "@/components/Rules";
 import Analytics from "@/components/Analytics";
 import AuthGuard from "@/components/AuthGuard";
-import CustomContextModal from "@/components/CustomContextModal";
 import VipContacts from "@/components/VipContacts";
+import CustomContextModal from "@/components/CustomContextModal";
+import PushNotifications from "@/components/PushNotifications";
+
+const NAV_ITEMS = [
+  { id: "dashboard", label: "Dashboard", icon: "📊" },
+  { id: "rules", label: "Rules", icon: "⚙️" },
+  { id: "vip", label: "VIP", icon: "⭐" },
+  { id: "push", label: "Notifications", icon: "🔔" },
+  { id: "analytics", label: "Analytics", icon: "📈" },
+];
 
 export default function Home() {
   const router = useRouter();
@@ -38,28 +47,27 @@ export default function Home() {
     }
   }, [darkMode]);
 
-  // Load user from token on mount
   useEffect(() => {
     const loadUser = async () => {
       const token = localStorage.getItem("token");
       if (!token) {
+        setLoading(false);
         router.push("/login");
         return;
       }
       try {
         const res = await axios.get(
           "https://context-notif-manager-backend.onrender.com/api/auth/me",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
+          { headers: { Authorization: `Bearer ${token}` } },
         );
         setUser(res.data);
       } catch {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         router.push("/login");
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     loadUser();
   }, []);
@@ -97,13 +105,9 @@ export default function Home() {
     try {
       const res = await axios.post(
         "https://context-notif-manager-backend.onrender.com/api/rules",
-        {
-          userId: user._id,
-          ...newRule,
-        },
+        { userId: user._id, ...newRule },
       );
       if (res.data.updated) {
-        // Rule was updated — replace old one in list
         setRules(
           rules.map((r) =>
             r.appName === res.data.appName && r.context === res.data.context
@@ -112,7 +116,6 @@ export default function Home() {
           ),
         );
       } else {
-        // New rule added
         setRules([...rules, res.data]);
       }
     } catch (err) {
@@ -189,10 +192,7 @@ export default function Home() {
     try {
       const res = await axios.post(
         "https://context-notif-manager-backend.onrender.com/api/vip",
-        {
-          userId: user._id,
-          ...contactData,
-        },
+        { userId: user._id, ...contactData },
       );
       setVipContacts([...vipContacts, res.data]);
     } catch (err) {
@@ -249,6 +249,52 @@ export default function Home() {
     );
   }
 
+  const renderContent = () => {
+    switch (activeTab) {
+      case "dashboard":
+        return (
+          <Dashboard
+            user={user}
+            rules={rules}
+            switchContext={switchContext}
+            darkMode={darkMode}
+            customContexts={customContexts}
+            onAddContext={() => setShowContextModal(true)}
+            onDeleteContext={deleteCustomContext}
+          />
+        );
+      case "rules":
+        return (
+          <Rules
+            rules={rules}
+            newRule={newRule}
+            setNewRule={setNewRule}
+            addRule={addRule}
+            deleteRule={deleteRule}
+            rulesLoading={rulesLoading}
+            darkMode={darkMode}
+            duplicateError={duplicateError}
+            setDuplicateError={setDuplicateError}
+          />
+        );
+      case "vip":
+        return (
+          <VipContacts
+            vipContacts={vipContacts}
+            onAdd={addVipContact}
+            onDelete={deleteVipContact}
+            darkMode={darkMode}
+          />
+        );
+      case "push":
+        return <PushNotifications user={user} darkMode={darkMode} />;
+      case "analytics":
+        return <Analytics rules={rules} darkMode={darkMode} />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <AuthGuard>
       <div
@@ -258,18 +304,22 @@ export default function Home() {
           background: "var(--bg-tertiary)",
           color: "var(--text-primary)",
           transition: "all 0.3s ease",
+          overflow: "hidden",
+          width: "100%",
         }}
       >
-        <Sidebar
-          user={user}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          darkMode={darkMode}
-          setDarkMode={setDarkMode}
-          onLogout={logout}
-        />
+        <div className="desktop-sidebar" style={{ display: "flex" }}>
+          <Sidebar
+            user={user}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            darkMode={darkMode}
+            setDarkMode={setDarkMode}
+            onLogout={logout}
+          />
+        </div>
 
-        <div style={{ flex: 1, overflowY: "auto" }}>
+        <div className="main-content" style={{ flex: 1, overflowY: "auto" }}>
           {error && (
             <div
               style={{
@@ -285,93 +335,89 @@ export default function Home() {
               {error}
             </div>
           )}
-
           <AnimatePresence mode="wait">
-            {activeTab === "dashboard" && (
-              <motion.div
-                key="dashboard"
-                initial={{ opacity: 0, x: 16 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -16 }}
-                transition={{ duration: 0.18 }}
-                style={{ height: "100%" }}
-              >
-                <Dashboard
-                  user={user}
-                  rules={rules}
-                  switchContext={switchContext}
-                  darkMode={darkMode}
-                  customContexts={customContexts}
-                  onAddContext={() => setShowContextModal(true)}
-                  onDeleteContext={deleteCustomContext}
-                />
-              </motion.div>
-            )}
-            {activeTab === "rules" && (
-              <motion.div
-                key="rules"
-                initial={{ opacity: 0, x: 16 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -16 }}
-                transition={{ duration: 0.18 }}
-                style={{ height: "100%" }}
-              >
-                <Rules
-                  rules={rules}
-                  newRule={newRule}
-                  setNewRule={setNewRule}
-                  addRule={addRule}
-                  deleteRule={deleteRule}
-                  rulesLoading={rulesLoading}
-                  darkMode={darkMode}
-                  duplicateError={duplicateError}
-                  setDuplicateError={setDuplicateError}
-                />
-              </motion.div>
-            )}
-
-            {activeTab === "vip" && (
-              <motion.div
-                key="vip"
-                initial={{ opacity: 0, x: 16 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -16 }}
-                transition={{ duration: 0.18 }}
-                style={{ height: "100%" }}
-              >
-                <VipContacts
-                  vipContacts={vipContacts}
-                  onAdd={addVipContact}
-                  onDelete={deleteVipContact}
-                  darkMode={darkMode}
-                />
-              </motion.div>
-            )}
-
-            {activeTab === "analytics" && (
-              <motion.div
-                key="analytics"
-                initial={{ opacity: 0, x: 16 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -16 }}
-                transition={{ duration: 0.18 }}
-                style={{ height: "100%" }}
-              >
-                <Analytics rules={rules} darkMode={darkMode} />
-              </motion.div>
-            )}
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18 }}
+              style={{ minHeight: "100vh", width: "100%" }}
+            >
+              {renderContent()}
+            </motion.div>
           </AnimatePresence>
         </div>
-      </div>
 
-      {showContextModal && (
-        <CustomContextModal
-          userId={user?._id}
-          onClose={() => setShowContextModal(false)}
-          onAdd={addCustomContext}
-          darkMode={darkMode}
-        />
-      )}
+        <div
+          className="mobile-nav"
+          style={{
+            position: "fixed",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            background: "var(--bg-card)",
+            borderTop: "1px solid var(--border)",
+            padding: "8px 0",
+            justifyContent: "space-around",
+            alignItems: "center",
+            zIndex: 100,
+          }}
+        >
+          {NAV_ITEMS.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "3px",
+                padding: "6px 8px",
+                borderRadius: "10px",
+                border: "none",
+                background: "transparent",
+                color:
+                  activeTab === item.id ? "var(--accent)" : "var(--text-muted)",
+                fontSize: "9px",
+                fontWeight: activeTab === item.id ? "600" : "400",
+                cursor: "pointer",
+              }}
+            >
+              <span style={{ fontSize: "18px" }}>{item.icon}</span>
+              {item.label}
+            </button>
+          ))}
+          <button
+            onClick={logout}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "3px",
+              padding: "6px 8px",
+              borderRadius: "10px",
+              border: "none",
+              background: "transparent",
+              color: "var(--text-muted)",
+              fontSize: "9px",
+              cursor: "pointer",
+            }}
+          >
+            <span style={{ fontSize: "18px" }}>🚪</span>
+            Logout
+          </button>
+        </div>
+
+        {showContextModal && (
+          <CustomContextModal
+            userId={user?._id}
+            onClose={() => setShowContextModal(false)}
+            onAdd={addCustomContext}
+            darkMode={darkMode}
+          />
+        )}
+      </div>
     </AuthGuard>
   );
 }

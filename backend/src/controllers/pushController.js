@@ -2,6 +2,8 @@ import webpush from "web-push";
 import PushSubscription from "../models/PushSubscription.js";
 import Rule from "../models/Rule.js";
 import Auth from "../models/Auth.js";
+import dotenv from "dotenv";
+dotenv.config();
 
 webpush.setVapidDetails(
   "mailto:admin@notifmanager.com",

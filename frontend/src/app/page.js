@@ -11,12 +11,14 @@ import AuthGuard from "@/components/AuthGuard";
 import VipContacts from "@/components/VipContacts";
 import CustomContextModal from "@/components/CustomContextModal";
 import PushNotifications from "@/components/PushNotifications";
+import AutoContext from "@/components/AutoContext";
 
 const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: "📊" },
   { id: "rules", label: "Rules", icon: "⚙️" },
   { id: "vip", label: "VIP", icon: "⭐" },
   { id: "push", label: "Notifications", icon: "🔔" },
+  { id: "auto", label: "Auto", icon: "⏰" },
   { id: "analytics", label: "Analytics", icon: "📈" },
 ];
 
@@ -290,6 +292,14 @@ export default function Home() {
         return <PushNotifications user={user} darkMode={darkMode} />;
       case "analytics":
         return <Analytics rules={rules} darkMode={darkMode} />;
+      case "auto":
+        return (
+          <AutoContext
+            user={user}
+            switchContext={switchContext}
+            darkMode={darkMode}
+          />
+        );
       default:
         return null;
     }

@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { id: "vip", label: "VIP Contacts", icon: "⭐" },
   { id: "push", label: "Notifications", icon: "🔔" },
   { id: "auto", label: "Auto Context", icon: "⏰" },
+  { id: "ai", label: "AI Suggestions", icon: "🤖" },
   { id: "analytics", label: "Analytics", icon: "📈" },
 ];
 

@@ -12,6 +12,7 @@ import VipContacts from "@/components/VipContacts";
 import CustomContextModal from "@/components/CustomContextModal";
 import PushNotifications from "@/components/PushNotifications";
 import AutoContext from "@/components/AutoContext";
+import AiSuggestions from "@/components/AiSuggestions";
 
 const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: "📊" },
@@ -19,6 +20,7 @@ const NAV_ITEMS = [
   { id: "vip", label: "VIP", icon: "⭐" },
   { id: "push", label: "Notifications", icon: "🔔" },
   { id: "auto", label: "Auto", icon: "⏰" },
+  { id: "ai", label: "AI", icon: "🤖" },
   { id: "analytics", label: "Analytics", icon: "📈" },
 ];
 
@@ -126,6 +128,28 @@ export default function Home() {
       } else {
         setError("Failed to add rule!");
       }
+    }
+  };
+
+  const addRuleDirect = async (appName, context, action) => {
+    try {
+      const res = await axios.post(
+        "https://context-notif-manager-backend.onrender.com/api/rules",
+        { userId: user._id, appName, context, action },
+      );
+      if (res.data.updated) {
+        setRules(
+          rules.map((r) =>
+            r.appName === res.data.appName && r.context === res.data.context
+              ? res.data
+              : r,
+          ),
+        );
+      } else {
+        setRules([...rules, res.data]);
+      }
+    } catch (err) {
+      console.error("Failed to add rule from AI suggestion");
     }
   };
 
@@ -297,6 +321,17 @@ export default function Home() {
           <AutoContext
             user={user}
             switchContext={switchContext}
+            darkMode={darkMode}
+          />
+        );
+      case "ai":
+        return (
+          <AiSuggestions
+            user={user}
+            rules={rules}
+            addRule={async (app, context, action) => {
+              await addRuleDirect(app, context, action);
+            }}
             darkMode={darkMode}
           />
         );

@@ -5,6 +5,7 @@ A full-stack web app that intelligently filters and manages notifications based 
 ![Tech Stack](https://img.shields.io/badge/Next.js-16-black) ![Node.js](https://img.shields.io/badge/Node.js-24-green) ![MongoDB](https://img.shields.io/badge/MongoDB-8-green)
 
 ## 🌐 Live Demo
+
 - **Frontend:** https://context-notif-manager.vercel.app
 - **Backend API:** https://context-notif-manager-backend.onrender.com
 
@@ -17,9 +18,11 @@ A full-stack web app that intelligently filters and manages notifications based 
 - **Authentication** — Register/Login via Email or Phone number with JWT
 - **Context Switching** — Instantly switch between Work, Leisure, Sleep, Focus, and Commute modes
 - **Custom Contexts** — Create your own contexts like Gym, Study, Date Night with custom icons and colors
+- **Auto Context Switching** — Automatically switch context based on time of day (e.g. Sleep at 10PM)
 - **Rule Builder** — Create custom rules to allow, mute, or snooze notifications per app per context
 - **Duplicate Rule Prevention** — Smart detection prevents adding the same rule twice
 - **VIP Contacts** — Certain contacts always bypass mute rules (e.g. Mom on WhatsApp)
+- **AI Suggestions** — Smart rule suggestions based on common notification patterns with confidence scores
 - **Browser Push Notifications** — Real browser notifications filtered by your rules in real time
 - **Live Dashboard** — See incoming notifications filtered in real time based on your active context
 - **Analytics** — Insights into how many apps are muted, snoozed, or allowed across all contexts
@@ -31,15 +34,15 @@ A full-stack web app that intelligently filters and manages notifications based 
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | Next.js 16, Tailwind CSS, Framer Motion |
-| Backend | Node.js, Express.js, Socket.io |
-| Database | MongoDB Atlas, Mongoose |
-| Auth | JWT, bcryptjs |
-| Push Notifications | Web Push API, VAPID, Service Workers |
-| Deployment | Vercel (Frontend), Render (Backend) |
-| Package Manager | pnpm |
+| Layer              | Technology                              |
+| ------------------ | --------------------------------------- |
+| Frontend           | Next.js 16, Tailwind CSS, Framer Motion |
+| Backend            | Node.js, Express.js, Socket.io          |
+| Database           | MongoDB Atlas, Mongoose                 |
+| Auth               | JWT, bcryptjs                           |
+| Push Notifications | Web Push API, VAPID, Service Workers    |
+| Deployment         | Vercel (Frontend), Render (Backend)     |
+| Package Manager    | pnpm                                    |
 
 ---
 
@@ -49,99 +52,103 @@ context-notif-manager/
 
 ├── backend/
 
-│   ├── src/
+│ ├── src/
 
-│   │   ├── controllers/
+│ │ ├── controllers/
 
-│   │   │   ├── authController.js
+│ │ │ ├── authController.js
 
-│   │   │   ├── userController.js
+│ │ │ ├── userController.js
 
-│   │   │   ├── ruleController.js
+│ │ │ ├── ruleController.js
 
-│   │   │   ├── contextController.js
+│ │ │ ├── contextController.js
 
-│   │   │   ├── vipController.js
+│ │ │ ├── vipController.js
 
-│   │   │   └── pushController.js
+│ │ │ └── pushController.js
 
-│   │   ├── models/
+│ │ ├── models/
 
-│   │   │   ├── Auth.js
+│ │ │ ├── Auth.js
 
-│   │   │   ├── User.js
+│ │ │ ├── User.js
 
-│   │   │   ├── Rule.js
+│ │ │ ├── Rule.js
 
-│   │   │   ├── Context.js
+│ │ │ ├── Context.js
 
-│   │   │   ├── VipContact.js
+│ │ │ ├── VipContact.js
 
-│   │   │   └── PushSubscription.js
+│ │ │ └── PushSubscription.js
 
-│   │   ├── routes/
+│ │ ├── routes/
 
-│   │   │   ├── authRoutes.js
+│ │ │ ├── authRoutes.js
 
-│   │   │   ├── userRoutes.js
+│ │ │ ├── userRoutes.js
 
-│   │   │   ├── ruleRoutes.js
+│ │ │ ├── ruleRoutes.js
 
-│   │   │   ├── contextRoutes.js
+│ │ │ ├── contextRoutes.js
 
-│   │   │   ├── vipRoutes.js
+│ │ │ ├── vipRoutes.js
 
-│   │   │   └── pushRoutes.js
+│ │ │ └── pushRoutes.js
 
-│   │   ├── middleware/
+│ │ ├── middleware/
 
-│   │   │   └── authMiddleware.js
+│ │ │ └── authMiddleware.js
 
-│   │   ├── db.js
+│ │ ├── db.js
 
-│   │   └── index.js
+│ │ └── index.js
 
-│   └── package.json
+│ └── package.json
 
 ├── frontend/
 
-│   ├── public/
+│ ├── public/
 
-│   │   └── sw.js
+│ │ └── sw.js
 
-│   ├── src/
+│ ├── src/
 
-│   │   ├── app/
+│ │ ├── app/
 
-│   │   │   ├── login/
+│ │ │ ├── login/
 
-│   │   │   ├── register/
+│ │ │ ├── register/
 
-│   │   │   ├── page.js
+│ │ │ ├── page.js
 
-│   │   │   ├── layout.js
+│ │ │ ├── layout.js
 
-│   │   │   └── globals.css
+│ │ │ └── globals.css
 
-│   │   └── components/
+│ │ └── components/
 
-│   │       ├── Sidebar.js
+│ │ ├── Sidebar.js
 
-│   │       ├── Dashboard.js
+│ │ ├── Dashboard.js
 
-│   │       ├── Rules.js
+│ │ ├── Rules.js
 
-│   │       ├── Analytics.js
+│ │ ├── Analytics.js
 
-│   │       ├── VipContacts.js
+│ │ ├── VipContacts.js
 
-│   │       ├── PushNotifications.js
+│ │ ├── PushNotifications.js
 
-│   │       ├── CustomContextModal.js
+│ │ ├── AutoContext.js
 
-│   │       └── AuthGuard.js
+│ │ ├── AiSuggestions.js
 
-│   └── package.json
+│ │ ├── CustomContextModal.js
+
+│ │ └── AuthGuard.js
+
+│ └── package.json
 
 └── README.md
 
@@ -150,17 +157,20 @@ context-notif-manager/
 ## ⚙️ How to Run Locally
 
 ### Prerequisites
+
 - Node.js v20+
 - MongoDB installed locally
 - pnpm installed (`npm install -g pnpm`)
 
 ### 1. Clone the repository
+
 ```bash
 git clone https://github.com/roshaannn12/context-notif-manager.git
 cd context-notif-manager
 ```
 
 ### 2. Setup Backend
+
 ```bash
 cd backend
 pnpm install
@@ -174,21 +184,24 @@ PORT=5000
 
 JWT_SECRET=your_jwt_secret
 
-VAPID_PUBLIC_KEY=your_vapid_public_key
+VAPID_PUBLIC_KEY=BNn6InO-Re0wMCTXYrwg2RDTsJO077fJGgyqYDPZvqpOCrZTiw7KZt0KZ_SBcvNk-6GMgKYYgX0eP-d3pTz1wj8
 
-VAPID_PRIVATE_KEY=your_vapid_private_key
+VAPID_PRIVATE_KEY=ezI7cvV_E_LpC8OEVJ-CPfpLpsaBTk_ABumaAoPayCM
 
 Generate VAPID keys:
+
 ```bash
 node -e "const webpush = require('web-push'); const keys = webpush.generateVAPIDKeys(); console.log('Public:', keys.publicKey); console.log('Private:', keys.privateKey);"
 ```
 
 Run the backend:
+
 ```bash
 pnpm dev
 ```
 
 ### 3. Setup Frontend
+
 ```bash
 cd frontend
 pnpm install
@@ -207,9 +220,10 @@ Frontend runs on `http://localhost:3000`
 - [x] Phase 2.5 — Extra features (Custom contexts, VIP contacts, duplicate prevention)
 - [x] Phase 2.5 — Deployment (Vercel + Render + MongoDB Atlas)
 - [x] Phase 3 — Browser Push Notifications (real notifications filtered by rules)
-- [ ] Phase 3.5 — AI-powered suggestions and predictive filtering
+- [x] Phase 3.5 — AI Suggestions (smart rule recommendations with confidence scores)
+- [x] Phase 3.5 — Auto Context Switching (time-based automatic context detection)
 - [ ] Phase 4 — Android/iOS companion app for real phone notifications
-- [ ] Phase 4 — Auto context detection (GPS, calendar, time-based)
+- [ ] Phase 4 — GPS and calendar based auto context detection
 
 ---
 
